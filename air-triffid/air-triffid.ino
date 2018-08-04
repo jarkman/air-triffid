@@ -98,7 +98,7 @@ char report[80];
 float joyX = 0.0; // -1.0 to 1.0
 float joyY = 0.0;
 
-float basePressure = 1500.0; // Pa, about hwat we expect from our blower
+float airboxPressure = 1500.0; // Pa, about hwat we expect from our blower
 float atmosphericPressure = 101000.0; // Pa
 
 float wavePeriod = 10000.0; // in millis
@@ -209,7 +209,7 @@ boolean loopSelftest()
 
     int i = 0;
     for( Bellows b : bellows )
-      b.targetPressure = basePressure * selftest[nextSelftest][i++];  
+      b.targetPressure = airboxPressure * selftest[nextSelftest][i++];  
     
   }
   return true;
@@ -219,7 +219,7 @@ boolean loopManual()
 {
   for( Bellows b : bellows )
   {
-    b.targetPressure = basePressure * (joyX * b.x + joyY * b.y); // not at all sure this is sensible
+    b.targetPressure = airboxPressure * (joyX * b.x + joyY * b.y); // not at all sure this is sensible
   }
 
   return true;

@@ -11,6 +11,40 @@
 #define SERVOMIN  130 //150 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  550 //600 // this is the 'maximum' pulse length count (out of 4096)
 
+BME280 bme280Atmospheric;
+BME280 bme280Airbox;
+
+int muxAddressAtmospheric = 3;
+int muxAddressAirbox = 4;
+
+void setupFixedPressures()
+{
+    
+  muxSelect(muxAddressAtmospheric);
+  bme280Atmospheric.setI2CAddress(0x76);
+  if (! bme280Atmospheric.beginI2C() )
+  {
+    Serial.println("Failed to read BME280 for atmospheric");
+  }
+  
+  muxSelect(muxAddressAirbox);
+  bme280Airbox.setI2CAddress(0x76);
+  if (! bme280Airbox.beginI2C() )
+  {
+    Serial.println("Failed to read BME280 for airbox");
+  }
+}
+
+void readFixedPressures()
+{
+  muxSelect(muxAddressAtmospheric);
+  atmosphericPressure = bme280Atmospheric.readFloatPressure();
+ 
+  muxSelect(muxAddressAirbox);
+  airboxPressure = bme280Airbox.readFloatPressure();
+
+}
+
 
 Bellows::Bellows( float _x, float _y, int _muxAddress, int _inflateServo, int _deflateServo )
 {
@@ -33,7 +67,6 @@ Bellows::Bellows( float _x, float _y, int _muxAddress, int _inflateServo, int _d
   }
 
 }
-
 
 void Bellows::loop()
 {
