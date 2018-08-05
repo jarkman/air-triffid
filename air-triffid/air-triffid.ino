@@ -4,7 +4,7 @@
 // This runs the air triffid with 6 servo-controlled air valves,
 // taking user input from a wii nunchuck,
 // with pressure feeback from BME280 pressure sensors in each chamber
-// position feedback from one LSM303 compass sensors (specifically, the Adafruit board)
+// position feedback from one LSM303 compass sensor (specifically, the Adafruit board)
 // a tca9548a i2c multiplexer on the Adafruit breakout
 // and a Adafruit PWMServoDriver board 
 
@@ -34,6 +34,17 @@
 // Neopixels are on D6
 // Encoder is on D5 & D7, switch on D0
 
+// or, in order:
+// D0 Encoder switch
+// D1 SCL
+// D2 SDA
+// D3 -
+// D4 -
+// D5 Encoder A
+// D6 Neopixels
+// D7 Encoder B
+// D8 - 
+
 
 // Each node has one compass sensor and either two or zero rangers
 
@@ -43,9 +54,16 @@
 // wii nunchuck: 0x52
 
 // Mux    : 0x70, 0x71
-// and beyound the mux:
+// and beyond the mux:
 //  LSM303 : 0x19 & 0x1E
 //  BMP280: 0x76
+
+// Mux channels:
+// 0: bellows 0  BMP280 and LSM303
+// 1: bellows 1  BMP280
+// 2: bellows 2  BMP280
+// 3: atmospheric pressure BMP280 (on control board)
+// 4: airbox pressure BMP280
 
 
 #include "Node.h"
