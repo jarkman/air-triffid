@@ -2,18 +2,28 @@
 
 Nunchuk nchuk;
 
+boolean gotNunchuck = false;
 void setupNunchuck() {
 
     noMux();
   nchuk.begin();
 
-  while (!nchuk.connect()) {
+  if (!nchuk.connect()) {
     Serial.println("Nunchuk not detected!");
-    delay(1000);
+    
+  }
+  else
+  {
+    gotNunchuck = true;
+    
   }
 }
 
 void loopNunchuck() {
+
+  if( ! gotNunchuck )
+    return;
+    
     noMux();
   boolean success = nchuk.update();  // Get new data from the controller
 
@@ -21,6 +31,7 @@ void loopNunchuck() {
     nchuk.printDebug();  // Print all of the values!
     joyX = fmap(nchuk.joyX(),0.0,255.0,-1.0,1.0);
     joyY = fmap(nchuk.joyY(),0.0,255.0,-1.0,1.0);
+    baselinePressureFraction = fmap(nchuk.pitchAngle(), -180.0, 180.0, 0.0, 1.0 );
   }
   else {  // Data is bad :(
     Serial.println("Controller Disconnected!");

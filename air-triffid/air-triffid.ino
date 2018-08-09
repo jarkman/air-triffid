@@ -38,10 +38,10 @@
 // D0 Encoder switch
 // D1 SCL
 // D2 SDA
-// D3 -
-// D4 -
+// D3 Neopixels 0
+// D4 Neopixels 1
 // D5 Encoder A
-// D6 Neopixels
+// D6 Neopixels 2
 // D7 Encoder B
 // D8 - 
 
@@ -77,7 +77,7 @@
 
 #include "bellows.h"
 
-boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
+boolean trace = true;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = true;
 boolean traceNodes = false;
 
@@ -101,6 +101,7 @@ MicroOLED oled(PIN_RESET, DC_JUMPER);  // I2C Example
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
+#define BELLOWS 3
 // servo numbers on the PWM servo driver
 Bellows bellows[] = {Bellows(0.0, 1.0, 0,0,1), 
                     Bellows(sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),1,2,3), 
@@ -115,9 +116,11 @@ char report[80];
 
 float joyX = 0.0; // -1.0 to 1.0
 float joyY = 0.0;
+float baselinePressureFraction = 1.0;
 
-float airboxPressure = 1500.0; // Pa, about hwat we expect from our blower
-float atmosphericPressure = 101000.0; // Pa
+float airboxAbsPressure = 101000.0 + 1500.0; // Pa, about hwat we expect from our blower
+float atmosphericAbsPressure = 101000.0; // Pa
+float baselinePressure = 1000.0;
 
 float wavePeriod = 10000.0; // in millis
 float waveFraction = 0.5; // 0 to 1.0
@@ -209,8 +212,12 @@ boolean loopSelftest()
 
 
   float error = 0;
-  for( Bellows b : bellows )
-    error += fabs( b.error);
+  for( int b = 0; b < BELLOWS; b ++ )
+  {
+    Bellows *bellow = &(bellows[b]);
+  
+    error += fabs( bellow->error);
+  }
   
   if( nextSelftest < 0 ||  // first time round the loop
     error < 0.1 ||          // arrived at target pose
@@ -226,8 +233,11 @@ boolean loopSelftest()
       return false; // selftest done
 
     int i = 0;
-    for( Bellows b : bellows )
-      b.targetPressure = airboxPressure * selftest[nextSelftest][i++];  
+    for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->targetPressure = baselinePressure * selftest[nextSelftest][i++];  
+    }
     
   }
   return true;
@@ -235,12 +245,23 @@ boolean loopSelftest()
 
 boolean loopManual()
 {
-  for( Bellows b : bellows )
+  setBendDirection(joyX, joyY);
+
+    return true;
+}
+
+void setBendDirection(float x, float y)
+{
+  // at 0,0, set all three to nominal pressure
+  for( int b = 0; b < BELLOWS; b ++ )
   {
-    b.targetPressure = airboxPressure * (joyX * b.x + joyY * b.y); // not at all sure this is sensible
+    Bellows *bellow = &(bellows[b]);
+    float reduction =  (joyX * bellow->x - joyY * bellow->y); // not at all sure this is sensible
+    reduction = fconstrain( reduction, 0.0, 1.0 );
+    bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
 
-  return true;
+
 }
 
 void loopWave()
@@ -293,9 +314,11 @@ void loop() {
       if( ! loopBehaviour())
         loopWave();
 
-  for( Bellows b : bellows )
-    b.loop();
-    
+  for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->loop();
+    }
 
   long end = millis();
   if( trace ){ Serial.print("loop took ") ; Serial.println( end-start );}

@@ -38,10 +38,12 @@ void setupFixedPressures()
 void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
-  atmosphericPressure = bme280Atmospheric.readFloatPressure();
+  atmosphericAbsPressure = bme280Atmospheric.readFloatPressure();
  
   muxSelect(muxAddressAirbox);
-  airboxPressure = bme280Airbox.readFloatPressure();
+  airboxAbsPressure = bme280Airbox.readFloatPressure();
+
+  baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction;
 
 }
 
@@ -72,9 +74,12 @@ void Bellows::loop()
 {
 
   muxSelect(muxAddress);
-  currentPressure = bme280.readFloatPressure() - atmosphericPressure;
+  float pressure = bme280.readFloatPressure() - atmosphericAbsPressure;
 
-  error = targetPressure - currentPressure;
+  // a bit of smoothing
+  currentPressure = 0.9 * currentPressure + 0.1 * pressure;
+  
+  error = (targetPressure - currentPressure)/baselinePressure;
   if( trace ){Serial.print("targetPressure "); Serial.println(targetPressure);}
   if( trace ){Serial.print("currentPressure "); Serial.println(currentPressure);}
   if( trace ){Serial.print("error fraction "); Serial.println(error);}
