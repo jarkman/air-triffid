@@ -35,6 +35,11 @@ void setupFixedPressures()
   }
 }
 
+boolean goodPressure( float pressure )
+{
+  return pressure > 80000.0; 
+}
+
 void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
@@ -43,7 +48,10 @@ void readFixedPressures()
   muxSelect(muxAddressAirbox);
   airboxAbsPressure = bme280Airbox.readFloatPressure();
 
-  baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction;
+  if( goodPressure(airboxAbsPressure) && goodPressure(atmosphericAbsPressure))
+    baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction;
+  else
+    baselinePressure = 1000.0 * baselinePressureFraction;
 
 }
 
@@ -74,12 +82,25 @@ void Bellows::loop()
 {
 
   muxSelect(muxAddress);
-  float pressure = bme280.readFloatPressure() - atmosphericAbsPressure;
+  float pressure = bme280.readFloatPressure();
 
-  // a bit of smoothing
-  currentPressure = 0.9 * currentPressure + 0.1 * pressure;
+  if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
+  {
+    error = targetPressure > 0.0 ? -1.0 : 1.0 ; // crude rule so we still have soem motion with no pressure sensors 
+    
+  }
+  else
+  {
+    //Serial.println(pressure);
+    //Serial.println(atmosphericAbsPressure);
+    pressure = pressure - atmosphericAbsPressure;
   
-  error = (targetPressure - currentPressure)/baselinePressure;
+    // a bit of smoothing
+    currentPressure = 0.9 * currentPressure + 0.1 * pressure;
+    
+    error = (targetPressure - currentPressure)/baselinePressure;
+  }
+  
   if( trace ){Serial.print("targetPressure "); Serial.println(targetPressure);}
   if( trace ){Serial.print("currentPressure "); Serial.println(currentPressure);}
   if( trace ){Serial.print("error fraction "); Serial.println(error);}
@@ -91,12 +112,14 @@ void Bellows::loop()
     frustration += error * loopSeconds;
       
   // simple linear feedback
-  drive( error * DRIVE_GAIN);
+  setDrive( error * DRIVE_GAIN);
   
 }
 
-void Bellows::drive( float drive ) // 0 is off, 1.0 is full pressure
+void Bellows::setDrive( float d ) // -1.0 to deflate, 1.0 to inflate
 {
+  drive = fconstrain( d, -1.0, 1.0 );
+  
   if( drive > 0.0 ) //increase pressure
   {
     driveServoAngle(inflateServo, drive);
@@ -138,12 +161,9 @@ int printOneBellows( int y, int fh, Bellows*b )
   y += fh; 
   oled.setCursor(0,y); 
 
-   
-  //oled.print("  S");
-  //oled.print(threedigits( b->servoAngle));
-  
-  oled.print(" f");
-  oled.print(twodigits( b->frustration * 100.0));
+
+  oled.print("dr ");
+  oled.print(twodigits( b->drive * 100.0));
 
   y += fh; 
   oled.setCursor(0,y); 
@@ -158,11 +178,12 @@ void  printBellows(  )
 
   oled.setCursor(0,y);
 
-  oled.print("Bellows:");
+  /*oled.print("Bellows:");
   
-  y += fh; 
+  y += fh;
+   
   oled.setCursor(0,y); 
-  
+  */
   if( enableBellows )
   {
     for( Bellows b : bellows )

@@ -110,16 +110,21 @@ Bellows bellows[] = {Bellows(0.0, 1.0, 0,0,1),
 
 // UI screens accessible via encoder
 #define UI_STATES 3
-long uiState = 2;
+long uiState = 1;
 
 char report[80];
+
+float bendTargetX = 0.0; // -1.0 to 1.0
+float bendTargetY = 0.0;
+
+boolean gotNunchuck = false;
 
 float joyX = 0.0; // -1.0 to 1.0
 float joyY = 0.0;
 float baselinePressureFraction = 1.0;
 
-float airboxAbsPressure = 101000.0 + 1500.0; // Pa, about hwat we expect from our blower
-float atmosphericAbsPressure = 101000.0; // Pa
+float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about hwat we expect from our blower
+float atmosphericAbsPressure = 0.0; //101000.0; // Pa
 float baselinePressure = 1000.0;
 
 float wavePeriod = 10000.0; // in millis
@@ -245,9 +250,13 @@ boolean loopSelftest()
 
 boolean loopManual()
 {
+  if( ! gotNunchuck )
+    return false;
+
+  // TODO - return false when nunchuck idle
   setBendDirection(joyX, joyY);
 
-    return true;
+  return true;
 }
 
 void setBendDirection(float x, float y)
@@ -256,7 +265,9 @@ void setBendDirection(float x, float y)
   for( int b = 0; b < BELLOWS; b ++ )
   {
     Bellows *bellow = &(bellows[b]);
-    float reduction =  (joyX * bellow->x - joyY * bellow->y); // not at all sure this is sensible
+    bendTargetX = x;
+    bendTargetY = y;
+    float reduction =  (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
     reduction = fconstrain( reduction, 0.0, 1.0 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }

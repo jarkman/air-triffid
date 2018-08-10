@@ -11,7 +11,7 @@ class Bellows
   Bellows( float x, float y, int _muxAddress, int _inflateServo, int _deflateServo );
   void driveServoAngle();
   void driveServoAngle(int servoNum, float openFraction);
-  void drive( float drive );
+  void setDrive( float drive );
   void incrementTarget( float delta );
   void incrementTargetFromPosition( float delta );
   void loop();
@@ -23,6 +23,7 @@ class Bellows
 
   float x;
   float y;
+  float drive;
   
   private:
   

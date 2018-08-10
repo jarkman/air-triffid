@@ -2,7 +2,7 @@
 
 Nunchuk nchuk;
 
-boolean gotNunchuck = false;
+
 void setupNunchuck() {
 
     noMux();
@@ -22,8 +22,10 @@ void setupNunchuck() {
 void loopNunchuck() {
 
   if( ! gotNunchuck )
+  {
+    Serial.println("no nunchuck");
     return;
-    
+  } 
     noMux();
   boolean success = nchuk.update();  // Get new data from the controller
 
