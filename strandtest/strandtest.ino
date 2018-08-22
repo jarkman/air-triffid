@@ -3,7 +3,7 @@
   #include <avr/power.h>
 #endif
 
-#define PIN D3
+#define PIN 6//D3
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -35,8 +35,9 @@ void setup() {
 void loop() {
   // Some example procedures showing how to display to the pixels:
   //colorWipe(strip.Color(255, 255, 255), 5); //white
-
+//return;
   colorWipe(strip.Color(255,0,0), 2); // Red
+  return;
   colorWipe(strip.Color(0, 255, 0), 1); // Green
   colorWipe(strip.Color(0, 0, 255), 1); // Blue
 //colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW

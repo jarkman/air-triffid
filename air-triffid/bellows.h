@@ -8,7 +8,7 @@
 class Bellows
 {
   public:
-  Bellows( float x, float y, int _muxAddress, int _inflateServo, int _deflateServo );
+  Bellows( int n, float x, float y, int _muxAddress, int _inflateServo, int _deflateServo );
   void driveServoAngle();
   void driveServoAngle(int servoNum, float openFraction);
   void setDrive( float drive );
@@ -21,6 +21,7 @@ class Bellows
   float error; // -1 to 1
   float frustration; // integral of recent error, zeroed when we are on-target
 
+  int n;
   float x;
   float y;
   float drive;

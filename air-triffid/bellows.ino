@@ -2,8 +2,8 @@
 
 
 // Servo pos for valve open/close
-#define SERVO_CLOSE_DEGREES 60.0
-#define SERVO_OPEN_DEGREES 120.0
+#define SERVO_CLOSE_DEGREES 20.0
+#define SERVO_OPEN_DEGREES 150.0
 
 #define DRIVE_GAIN -1.0
 
@@ -14,8 +14,8 @@
 BME280 bme280Atmospheric;
 BME280 bme280Airbox;
 
-int muxAddressAtmospheric = 3;
-int muxAddressAirbox = 4;
+int muxAddressAtmospheric = 4;
+int muxAddressAirbox = 3;
 
 void setupFixedPressures()
 {
@@ -44,7 +44,15 @@ void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
   atmosphericAbsPressure = bme280Atmospheric.readFloatPressure();
- 
+  /*Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);
+
+   float h  = bme280Atmospheric.readFloatHumidity();
+  Serial.print(" h "); Serial.println(h);
+
+  int m  = bme280Atmospheric.getMode();
+  Serial.print(" m "); Serial.println(m);
+  */
+  
   muxSelect(muxAddressAirbox);
   airboxAbsPressure = bme280Airbox.readFloatPressure();
 
@@ -56,8 +64,9 @@ void readFixedPressures()
 }
 
 
-Bellows::Bellows( float _x, float _y, int _muxAddress, int _inflateServo, int _deflateServo )
+Bellows::Bellows( int _n, float _x, float _y, int _muxAddress, int _inflateServo, int _deflateServo )
 {
+  n = _n;
   x = _x;
   y = _y;
   muxAddress = _muxAddress;
@@ -86,8 +95,14 @@ void Bellows::loop()
 
   if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
   {
-    error = targetPressure > 0.0 ? -1.0 : 1.0 ; // crude rule so we still have soem motion with no pressure sensors 
-    
+    error = targetPressure > baselinePressure/5.0 ? -1.0 : 1.0 ; // crude rule so we still have some motion with no pressure sensors 
+
+    if( trace )
+    {
+        Serial.print("n "); Serial.print(n);
+        Serial.print(" targetPressure "); Serial.println(targetPressure);
+        Serial.print(" fallback error "); Serial.println(error);
+     }   
   }
   else
   {
@@ -138,7 +153,8 @@ void Bellows::setDrive( float d ) // -1.0 to deflate, 1.0 to inflate
 void Bellows::driveServoAngle(int servoNum, float openFraction)
 {
 
-  if( trace ){Serial.print("openFraction "); Serial.println(openFraction);}
+  if( trace )
+    {Serial.print("openFraction "); Serial.println(openFraction);}
 
   float servoAngle = fmap(openFraction, 0.0, 1.0, SERVO_CLOSE_DEGREES, SERVO_OPEN_DEGREES);
   

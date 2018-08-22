@@ -32,16 +32,16 @@
 //      wired to OLED and to mux and to servo board
 // PS2 uses D3 D4 D6 D8
 // Neopixels are on D6
-// Encoder is on D5 & D7, switch on D0
+// Encoder is on D5 & D7, switch on D0, pulling to ground
 
 // or, in order:
 // D0 Encoder switch
 // D1 SCL
 // D2 SDA
-// D3 Neopixels 0
-// D4 Neopixels 1
-// D5 Encoder A
-// D6 Neopixels 2
+// D3 Neopixels 0  via CD40109BE A p3 -> E p4   http://www.ti.com/lit/ds/symlink/cd40109b.pdf
+// D4 Neopixels 1                B p6 -> F p5
+// D5 Encoder A    
+// D6 Neopixels 2                C  p10 -> G p11
 // D7 Encoder B
 // D8 - 
 
@@ -52,18 +52,21 @@
 // Oled   : 0x3C
 // Adafruit_PWMServoDriver: 0x40
 // wii nunchuck: 0x52
+// MCP23017 GPIO: 0x20                   // http://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf
 
 // Mux    : 0x70, 0x71
 // and beyond the mux:
 //  LSM303 : 0x19 & 0x1E
 //  BMP280: 0x76
 
+
 // Mux channels:
-// 0: bellows 0  BMP280 and LSM303
-// 1: bellows 1  BMP280
+// 0: bellows 0  BMP280 and low LSM303
+// 1: bellows 1  BMP280 and high LSM303
 // 2: bellows 2  BMP280
-// 3: atmospheric pressure BMP280 (on control board)
-// 4: airbox pressure BMP280
+// 3: airbox pressure BMP280
+// 4: atmospheric pressure BMP280 (on control board)
+
 
 
 #include "Node.h"
@@ -77,7 +80,7 @@
 
 #include "bellows.h"
 
-boolean trace = true;          // activity tracing for finding crashes - leave off to get better response times
+boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = true;
 boolean traceNodes = false;
 
@@ -103,9 +106,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 #define BELLOWS 3
 // servo numbers on the PWM servo driver
-Bellows bellows[] = {Bellows(0.0, 1.0, 0,0,1), 
-                    Bellows(sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),1,2,3), 
-                    Bellows(-sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),2,4,5)};
+Bellows bellows[] = {Bellows(0, 0.0, 1.0, 0,0,1), 
+                    Bellows(1, sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),1,2,3), 
+                    Bellows(2, -sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),2,4,5)};
 
 
 // UI screens accessible via encoder
@@ -173,6 +176,8 @@ void setup() {
 
 
 
+  setupFixedPressures();
+  
   setupServoDriver();
 
   setupEncoder();
@@ -317,13 +322,18 @@ void loop() {
   //delay(100);
 
   //return;
+
+  readFixedPressures();
+  
   
   if( trace ) Serial.println("---Loop---");
   if( trace ) Serial.println("selftest/wave"); 
-  if( ! loopSelftest())
-    if( ! loopManual())
+  if( ! loopManual())
+    if( ! loopSelftest())
+    
       if( ! loopBehaviour())
         loopWave();
+
 
   for( int b = 0; b < BELLOWS; b ++ )
     {
@@ -374,44 +384,31 @@ float fconstrain(float f, float out_min, float out_max)
 
 // https://learn.adafruit.com/adafruit-tca9548a-1-to-8-i2c-multiplexer-breakout/wiring-and-test
 #define TCAADDR0 0x70
-#define TCAADDR1 0x71
 #define NO_MUX 16
 
-// 16: no mux
-// 0-7: mux0
-// 8-15: mux1
  
 void muxSelect(uint8_t i) {
   uint8_t m0;
-  uint8_t m1;
   
-  if( i > 15 )
+  if( i== NO_MUX )
   {
     // disable both
     m0 = 0;
-    m1 = 0;  
+    
   }
-  else if( i < 8 )
+  else
   {
-    // use mux 0, disable mux 1
+    
     m0 = 1 << i;
-    m1 = 0;
+ 
   }
-  else if( i <= 15 )
-  {
-    // disable mux 0, use mux 1
-    m0 = 0;
-    m1 = 1 << (i-8);
-  }
-
+ 
  
   Wire.beginTransmission(TCAADDR0);
   Wire.write(m0);
   Wire.endTransmission(); 
   
-  Wire.beginTransmission(TCAADDR1);
-  Wire.write(m1);
-  Wire.endTransmission();  
+ 
 }
 
 // disable mux 
