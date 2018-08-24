@@ -16,9 +16,9 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 
 #define STRIPS 3
-Adafruit_NeoPixel strips[] = {Adafruit_NeoPixel(60 * 5 + 72, D3, NEO_GRB + NEO_KHZ800),
-                              Adafruit_NeoPixel(60 * 5 + 72, D4, NEO_GRB + NEO_KHZ800),
-                              Adafruit_NeoPixel(60 * 5 + 72, D6, NEO_GRB + NEO_KHZ800)};
+Adafruit_NeoPixel strips[] = {Adafruit_NeoPixel(60 * 5 + 72 - 13, D3, NEO_GRB + NEO_KHZ800),
+                              Adafruit_NeoPixel(60 * 5 + 72 - 13, D4, NEO_GRB + NEO_KHZ800),
+                              Adafruit_NeoPixel(60 * 5 + 72 - 13, D6, NEO_GRB + NEO_KHZ800)};
 
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
@@ -112,7 +112,13 @@ void loopLeds()
     
   if( trace ) Serial.println("---loopLeds---");
     yield();
-  
+
+  sineScroll();
+}
+
+
+void sineScroll()
+{
     for( int s = 0;s < STRIPS; s ++)
     {
       Adafruit_NeoPixel *strip  =  &(strips[s]);

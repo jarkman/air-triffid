@@ -23,7 +23,7 @@ void loopNunchuck() {
 
   if( ! gotNunchuck )
   {
-    Serial.println("no nunchuck");
+    //Serial.println("no nunchuck");
     return;
   } 
     noMux();

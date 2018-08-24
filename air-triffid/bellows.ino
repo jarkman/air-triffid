@@ -2,8 +2,8 @@
 
 
 // Servo pos for valve open/close
-#define SERVO_CLOSE_DEGREES 20.0
-#define SERVO_OPEN_DEGREES 150.0
+#define SERVO_CLOSE_DEGREES 50.0 //20.0
+#define SERVO_OPEN_DEGREES 100.0// 150.0
 
 #define DRIVE_GAIN -1.0
 
@@ -44,22 +44,19 @@ void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
   atmosphericAbsPressure = bme280Atmospheric.readFloatPressure();
-  /*Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);
+  //Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);
 
-   float h  = bme280Atmospheric.readFloatHumidity();
-  Serial.print(" h "); Serial.println(h);
-
-  int m  = bme280Atmospheric.getMode();
-  Serial.print(" m "); Serial.println(m);
-  */
   
   muxSelect(muxAddressAirbox);
   airboxAbsPressure = bme280Airbox.readFloatPressure();
 
+  //Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);
+
+
   if( goodPressure(airboxAbsPressure) && goodPressure(atmosphericAbsPressure))
-    baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction;
+    baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction * breatheFraction;
   else
-    baselinePressure = 1000.0 * baselinePressureFraction;
+    baselinePressure = 1000.0 * baselinePressureFraction * breatheFraction;
 
 }
 
@@ -85,6 +82,17 @@ Bellows::Bellows( int _n, float _x, float _y, int _muxAddress, int _inflateServo
     Serial.println("Failed to read BME280 for bellows");
   }
 
+ 
+/*
+  
+  delay(300);
+  yield();
+  setDrive(-1.0);
+  delay(300);
+  yield();
+  setDrive(0);
+
+  */
 }
 
 void Bellows::loop()
@@ -92,6 +100,8 @@ void Bellows::loop()
 
   muxSelect(muxAddress);
   float pressure = bme280.readFloatPressure();
+
+  //Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);
 
   if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
   {

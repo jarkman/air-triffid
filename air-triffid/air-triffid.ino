@@ -6,6 +6,7 @@
 // with pressure feeback from BME280 pressure sensors in each chamber
 // position feedback from one LSM303 compass sensor (specifically, the Adafruit board)
 // a tca9548a i2c multiplexer on the Adafruit breakout
+// a MCP23017 GPIO to read PIR signals
 // and a Adafruit PWMServoDriver board 
 
 // We use Polulu libraries for the LSM303 because they use a lot less memory than the Adafruit libraries
@@ -104,6 +105,8 @@ MicroOLED oled(PIN_RESET, DC_JUMPER);  // I2C Example
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
+
+
 #define BELLOWS 3
 // servo numbers on the PWM servo driver
 Bellows bellows[] = {Bellows(0, 0.0, 1.0, 0,0,1), 
@@ -125,6 +128,11 @@ boolean gotNunchuck = false;
 float joyX = 0.0; // -1.0 to 1.0
 float joyY = 0.0;
 float baselinePressureFraction = 1.0;
+float breatheFraction = 1.0;
+
+long breatheStartT = 0;
+float breathePeriod = 20000.0; // in millis
+float breatheAmplitude = 0.2;
 
 float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about hwat we expect from our blower
 float atmosphericAbsPressure = 0.0; //101000.0; // Pa
@@ -173,7 +181,7 @@ void setup() {
   if( trace ) Serial.println("..i2c");
   setupI2C();
 
-
+  setupPir();
 
 
   setupFixedPressures();
@@ -185,11 +193,14 @@ void setup() {
   setupLeds();
 
   setupNunchuck();
+
+  setupWifi();
   
   //baseServo.attach(D7); 
   //tipServo.attach(D8); 
 
   waveStartT = millis();
+  breatheStartT = millis();
 
   
 }
@@ -204,7 +215,15 @@ void setupServoDriver()
 }
 
 
+void loopBreathe()
+{
+  // modulate overall pressure up & down a bit ihn a slow sine
+  float theta = 2 * PI * (millis() - breatheStartT)/breathePeriod;
 
+   
+  breatheFraction = 1.0 - breatheAmplitude * 0.5 * sin(theta);
+ 
+}
 
 float wave(float phaseOffset) // -1.0 to 1.0
 {
@@ -311,6 +330,10 @@ void loopWave()
 void loop() {
 
   long start = millis();
+
+  loopBreathe();
+  loopWifi();
+  loopPir();
   
   loopEncoder();
   loopDisplay();
@@ -416,4 +439,6 @@ void noMux()
 {
   muxSelect( NO_MUX );
 }
+
+
 
