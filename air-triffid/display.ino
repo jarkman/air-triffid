@@ -28,7 +28,7 @@ void loopDisplay()
   switch( uiState )
   {
     case 0: 
-      //printNodes( );
+      printPirs( );
       break;
     case 1:
       printBellows();

@@ -114,6 +114,11 @@ Bellows bellows[] = {Bellows(0, 0.0, 1.0, 0,0,1),
                     Bellows(2, -sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),2,4,5)};
 
 
+
+float attentionAngle = 0.0; // net attention direction, degrees clockwise from bellows 0
+float attentionAmount = 0.0; // 0.0 to 1.1
+
+
 // UI screens accessible via encoder
 #define UI_STATES 3
 long uiState = 1;
@@ -134,7 +139,7 @@ long breatheStartT = 0;
 float breathePeriod = 20000.0; // in millis
 float breatheAmplitude = 0.2;
 
-float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about hwat we expect from our blower
+float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about what we expect from our blower
 float atmosphericAbsPressure = 0.0; //101000.0; // Pa
 float baselinePressure = 1000.0;
 
@@ -277,11 +282,15 @@ boolean loopManual()
   if( ! gotNunchuck )
     return false;
 
+  if( nunchuckIdle())
+    return false;
+  
   // TODO - return false when nunchuck idle
   setBendDirection(joyX, joyY);
 
   return true;
 }
+
 
 void setBendDirection(float x, float y)
 {
@@ -297,6 +306,11 @@ void setBendDirection(float x, float y)
   }
 
 
+}
+
+void setBendAngle( float angle, float amount )
+{
+  setBendDirection( cos( radians( angle )) * amount, sin(radians(angle))*amount );
 }
 
 void loopWave()

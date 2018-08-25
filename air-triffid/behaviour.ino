@@ -62,6 +62,16 @@ boolean loopBehaviour()
  {
   if( ! enableBehaviour )
     return false;
+
+  if( fabs(attentionAmount) > 0.1 )
+  {
+    // just look at nearest PIR
+    setBendAngle( attentionAngle, attentionAmount );
+    return true;
+  }
+
+  return false;
+
     
   if( action != ACTION_NONE )
   {

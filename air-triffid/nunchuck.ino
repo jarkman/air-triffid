@@ -2,6 +2,7 @@
 
 Nunchuk nchuk;
 
+long lastNunchuckTime = 0;
 
 void setupNunchuck() {
 
@@ -19,6 +20,11 @@ void setupNunchuck() {
   }
 }
 
+boolean nunchuckIdle()
+{
+  return millis() - lastNunchuckTime > 20000;
+}
+
 void loopNunchuck() {
 
   if( ! gotNunchuck )
@@ -33,6 +39,9 @@ void loopNunchuck() {
     nchuk.printDebug();  // Print all of the values!
     joyX = fmap(nchuk.joyX(),0.0,255.0,-1.0,1.0);
     joyY = fmap(nchuk.joyY(),0.0,255.0,-1.0,1.0);
+    if( fabs( joyX ) > 0.1 || fabs( joyY ) > 0.1 )
+      lastNunchuckTime = millis();
+      
     baselinePressureFraction = fmap(nchuk.pitchAngle(), -180.0, 180.0, 0.0, 1.0 );
   }
   else {  // Data is bad :(

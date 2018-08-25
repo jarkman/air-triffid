@@ -128,7 +128,7 @@ void sineScroll()
         
         int r = 0;
   
-        float phase = (float) (i % (int) ledsPerCycle)/ledsPerCycle; // 0->1.0
+        float phase = (float) ((i + s * (int) ledsPerCycle / 3) % (int) ledsPerCycle)/ledsPerCycle; // 0->1.0
   
         phase = fmod( phase + timeOffset, 1.0  ); // move it along
         
