@@ -44,19 +44,21 @@ void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
   atmosphericAbsPressure = bme280Atmospheric.readFloatPressure();
-  //Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);
+  if( tracePressures ) { Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);}
 
   
   muxSelect(muxAddressAirbox);
   airboxAbsPressure = bme280Airbox.readFloatPressure();
 
-  //Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);
+  if( tracePressures ) { Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);}
 
 
   if( goodPressure(airboxAbsPressure) && goodPressure(atmosphericAbsPressure))
     baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction * breatheFraction;
   else
     baselinePressure = 1000.0 * baselinePressureFraction * breatheFraction;
+
+  if( tracePressures ) { Serial.print(" baselinePressure "); Serial.println(baselinePressure);}
 
 }
 
@@ -73,13 +75,18 @@ Bellows::Bellows( int _n, float _x, float _y, int _muxAddress, int _inflateServo
   targetPressure = 0.0;
   currentPressure = 0.0;
   frustration = 0;
+}
 
+void Bellows::setup()
+{
   
   muxSelect(muxAddress);
   bme280.setI2CAddress(0x76);
   if (! bme280.beginI2C() )
   {
+    Serial.print("n "); Serial.print(n);
     Serial.println("Failed to read BME280 for bellows");
+    delay(1000);
   }
 
  
@@ -101,7 +108,7 @@ void Bellows::loop()
   muxSelect(muxAddress);
   float pressure = bme280.readFloatPressure();
 
-  //Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);
+  if( tracePressures ) { Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);}
 
   if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
   {

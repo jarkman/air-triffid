@@ -17,7 +17,7 @@ void setupPir()
   {
     mcp.pinMode(p, INPUT);
     //mcp.pinMode(p, OUTPUT);
-    //mcp.pullUp(p, LOW);
+    // mcp.pullUp(p, LOW);
   }
 }
 
@@ -26,6 +26,8 @@ void loopPir()
 {
 
   s = ! s;
+
+  if( tracePirs ) Serial.print("PIRs");
   
   noMux();
   for( int p = 0; p < PIRS; p++)
@@ -33,11 +35,15 @@ void loopPir()
     // mcp.digitalWrite(p, s);
      
     pir[p] = mcp.digitalRead(p);
+
+    if( tracePirs )
+    {
     Serial.print(p);
     Serial.print(":");
     Serial.print(pir[p]);
     Serial.print(" ");
-
+    }
+    
     if( pir[p] )
       pirActivity[p]=1.0; // instant response
     else
@@ -47,7 +53,8 @@ void loopPir()
    
   }
 
-  Serial.println("");
+  if( tracePirs )
+    Serial.println("");
    
   float totalActivity = 0.0;
   float maxActivity = 0.0;

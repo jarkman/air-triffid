@@ -84,6 +84,8 @@
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = true;
 boolean traceNodes = false;
+boolean tracePressures = false;
+boolean tracePirs = false;
 
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
@@ -109,9 +111,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 #define BELLOWS 3
 // servo numbers on the PWM servo driver
-Bellows bellows[] = {Bellows(0, 0.0, 1.0, 0,0,1), 
-                    Bellows(1, sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),1,2,3), 
-                    Bellows(2, -sin(30.0*3.1415/180.0),-cos(30.0*3.1415/180.0),2,4,5)};
+Bellows bellows[] = {Bellows(0, 0.0,                     1.0,                     0, 0, 1), 
+                     Bellows(1, sin(30.0*3.1415/180.0),  -cos(30.0*3.1415/180.0), 1, 2, 3), 
+                     Bellows(2, -sin(30.0*3.1415/180.0), -cos(30.0*3.1415/180.0), 2, 4, 5)};
 
 
 
@@ -204,6 +206,11 @@ void setup() {
   //baseServo.attach(D7); 
   //tipServo.attach(D8); 
 
+  for( int b = 0; b < BELLOWS; b ++ )
+  {
+    Bellows *bellow = &(bellows[b]);
+    bellow->setup();
+  }
   waveStartT = millis();
   breatheStartT = millis();
 

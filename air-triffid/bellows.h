@@ -14,6 +14,7 @@ class Bellows
   void setDrive( float drive );
   void incrementTarget( float delta );
   void incrementTargetFromPosition( float delta );
+  void setup();
   void loop();
 
   float targetPressure;

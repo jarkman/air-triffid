@@ -26,6 +26,8 @@ void ICACHE_RAM_ATTR handleInterrupt() {
   pulses ++;
 
   uiState = (((encoderValue/STEPS_PER_ACTION) % UI_STATES) + UI_STATES) % UI_STATES;
+  //Serial.print(" interrupt encoder count ");
+  //  Serial.println(encoderValue);
 }
 
 void setupEncoder()
@@ -43,10 +45,13 @@ void setupEncoder()
 
 void loopEncoder()
 {
-  if( trace ){Serial.print("ui state ");
-  Serial.print(uiState);
-  Serial.print(" encoder count ");
-  Serial.println(encoderValue);
+  //handleInterrupt() ;
+  
+  if( trace ){
+    Serial.print("ui state ");
+    Serial.print(uiState);
+    Serial.print(" encoder count ");
+    Serial.println(encoderValue);
   }
 }
 
