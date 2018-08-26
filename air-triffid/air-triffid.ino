@@ -11,9 +11,9 @@
 
 // We use Polulu libraries for the LSM303 because they use a lot less memory than the Adafruit libraries
 
-// Code lives in https://github.com/jarkman/gianttentacle
+// Code lives in https://github.com/jarkman/air-triffid
 
-// It runs on a Wemos D1 with an oled screen
+// It runs on a Wemos D1 mini with an oled screen
 
 
 // Wiring:
@@ -31,8 +31,8 @@
 //    D1 SCL
 //    D2 SDA
 //      wired to OLED and to mux and to servo board
-// PS2 uses D3 D4 D6 D8
-// Neopixels are on D6
+// 
+// Neopixels are on D3 D4 D6
 // Encoder is on D5 & D7, switch on D0, pulling to ground
 
 // or, in order:
@@ -47,7 +47,7 @@
 // D8 - 
 
 
-// Each node has one compass sensor and either two or zero rangers
+
 
 // i2c addresses:
 // Oled   : 0x3C
@@ -151,13 +151,6 @@ float waveFraction = 0.5; // 0 to 1.0
 float waveAmplitude = 1.0; // 0 to 1.0
 long waveStartT = 0;
 
-// PS2 stick positions, in range -1.0 to +1.0
-float stickLeftY = 0;
-float stickLeftX = 0;
-float stickRightY = 0;
-float stickRightX = 0;
-
-long lastStickMoveMillis = 0; // time when stick was last moved
 
 float loopSeconds = 0.1; // duration of our loop() in seconds, used for normalising assorted constants
 

@@ -114,7 +114,43 @@ void loopLeds()
     yield();
 
   sineScroll();
+  tipPulse();
+
+  for( int s = 0;s < STRIPS; s ++)
+    {
+      Adafruit_NeoPixel *strip  =  &(strips[s]);
+      strip->show();
+    }
 }
+
+void tipPulse()
+{
+  int len = 10;
+  float period = 5.0;
+  float phase = 2.0 * 3.1415 * fmod( ((float) millis()) / 1000.0, period ) / period; // radians
+  float brightness = 0.5 + 0.5* sin(phase); // 0 to 1.0
+  
+    for( int s = 0;s < STRIPS; s ++)
+    {
+      Adafruit_NeoPixel *strip  =  &(strips[s]);
+
+      for(uint16_t i=strip->numPixels()-len; i<strip->numPixels() ; i++) 
+      {
+
+        float ir = brightness;
+        float ig = 0;
+        float ib = 0;
+       
+        
+        uint32_t c = strip->Color((int) (ir*255.0), (int) (ig*255.0),(int) ( ib*255.0));
+        strip->setPixelColor(i, c);
+      }
+      
+    }
+    
+  
+}
+
 
 
 void sineScroll()
@@ -142,7 +178,7 @@ void sineScroll()
         uint32_t c = strip->Color(r, (int) (ig*255.0),(int) ( ib*255.0));
         strip->setPixelColor(i, c);
       }
-      strip->show();
+      
     }
     
     timeOffset = fmod( timeOffset + loopSeconds * scrollSpeed , 1.0 );
