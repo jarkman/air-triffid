@@ -3,7 +3,7 @@
 
 // Servo pos for valve open/close
 #define SERVO_CLOSE_DEGREES 50.0 //20.0
-#define SERVO_OPEN_DEGREES 100.0// 150.0
+#define SERVO_OPEN_DEGREES 130.0
 
 #define DRIVE_GAIN -1.0
 
@@ -16,6 +16,9 @@ BME280 bme280Airbox;
 
 int muxAddressAtmospheric = 4;
 int muxAddressAirbox = 3;
+
+float airboxCal = -213;
+float bellowsCal[] = {-132.36, 379.98, -26.57 }; // by observation
 
 void setupFixedPressures()
 {
@@ -48,9 +51,10 @@ void readFixedPressures()
 
   
   muxSelect(muxAddressAirbox);
-  airboxAbsPressure = bme280Airbox.readFloatPressure();
+  airboxAbsPressure = bme280Airbox.readFloatPressure() - airboxCal;
 
   if( tracePressures ) { Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);}
+if( tracePressures ) { Serial.print(" airboxdelta  "); Serial.println(airboxAbsPressure - atmosphericAbsPressure);}
 
 
   if( goodPressure(airboxAbsPressure) && goodPressure(atmosphericAbsPressure))
@@ -90,23 +94,28 @@ void Bellows::setup()
   }
 
  
-/*
+
   
-  delay(300);
+  Serial.print("selftest bellows "); Serial.println(n);
   yield();
   setDrive(-1.0);
-  delay(300);
+  delay(500);
+  yield(); 
+  delay(500);
   yield();
-  setDrive(0);
-
-  */
+  setDrive(1.0);
+  delay(500);
+  yield();
+  delay(500);
+  yield();
+  
 }
 
 void Bellows::loop()
 {
 
   muxSelect(muxAddress);
-  float pressure = bme280.readFloatPressure();
+  float pressure = bme280.readFloatPressure() -  bellowsCal[n];
 
   if( tracePressures ) { Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);}
 
@@ -132,11 +141,18 @@ void Bellows::loop()
     
     error = (targetPressure - currentPressure)/baselinePressure;
   }
+
+  float drive = - error * DRIVE_GAIN;
+
+  //drive = 1.0;
+
   
-  if( trace ){Serial.print("targetPressure "); Serial.println(targetPressure);}
-  if( trace ){Serial.print("currentPressure "); Serial.println(currentPressure);}
-  if( trace ){Serial.print("error fraction "); Serial.println(error);}
-  if( trace ){Serial.print("frustration "); Serial.println(frustration);}
+  
+  if( traceBellows ){Serial.print("n "); Serial.println(n);}
+  if( traceBellows ){Serial.print("targetPressure "); Serial.println(targetPressure);}
+  if( traceBellows ){Serial.print("currentPressure "); Serial.println(currentPressure);}
+  if( traceBellows ){Serial.print("error fraction "); Serial.println(error);}
+  if( traceBellows ){Serial.print("drive "); Serial.println(drive);}
 
   if( fabs(error) < FRUSTRATION_LIMIT )
     frustration = 0;
@@ -144,23 +160,30 @@ void Bellows::loop()
     frustration += error * loopSeconds;
       
   // simple linear feedback
-  setDrive( error * DRIVE_GAIN);
+  setDrive( drive );
   
 }
 
 void Bellows::setDrive( float d ) // -1.0 to deflate, 1.0 to inflate
 {
   drive = fconstrain( d, -1.0, 1.0 );
-  
+
+   //driveServoAngle(inflateServo, 1.0);
+   // driveServoAngle(deflateServo, 1.0);
+    //return;
+    
   if( drive > 0.0 ) //increase pressure
   {
     driveServoAngle(inflateServo, drive);
     driveServoAngle(deflateServo, 0.0);
+    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(drive);Serial.print("deflate "); Serial.println(0);}
   }
   else // decrease pressure
   {
     driveServoAngle(inflateServo, 0.0);
     driveServoAngle(deflateServo, -drive);
+    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(0);Serial.print("deflate "); Serial.println(-drive);}
+
   }
   
 }

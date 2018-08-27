@@ -83,8 +83,10 @@
 
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = true;
+boolean traceBellows = true;
+
 boolean traceNodes = false;
-boolean tracePressures = false;
+boolean tracePressures = true;
 boolean tracePirs = false;
 
 boolean enableBellows = true;  // turn on/off bellows code
@@ -155,7 +157,7 @@ long waveStartT = 0;
 float loopSeconds = 0.1; // duration of our loop() in seconds, used for normalising assorted constants
 
 // pose targets for a boot-time wriggle selftest
-#define SELFTEST_MILLIS 10000 //10000
+#define SELFTEST_MILLIS (10 * 1000) //10000
 #define NUM_SELFTEST 5
 // target pressure ratios for chambers
 float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,1.0},{1.0,1.0,1.0}};
@@ -254,10 +256,11 @@ boolean loopSelftest()
   }
   
   if( nextSelftest < 0 ||  // first time round the loop
-    error < 0.1 ||          // arrived at target pose
+    //error < 0.1 ||          // arrived at target pose
     (selftestStartMillis > 0 && millis() - selftestStartMillis > SELFTEST_MILLIS) ) // time has been too long, must be broken
   {
     //move on to next pose
+    Serial.println("------------------------------------------");
     Serial.print("Starting selftest pose ");
     Serial.println(nextSelftest);
     nextSelftest ++;
@@ -279,6 +282,9 @@ boolean loopSelftest()
 
 boolean loopManual()
 {
+  return false;
+
+  
   if( ! gotNunchuck )
     return false;
 
