@@ -5,37 +5,81 @@
 #define SERVO_CLOSE_DEGREES 50.0 //20.0
 #define SERVO_OPEN_DEGREES 130.0
 
-#define DRIVE_GAIN -1.0
+#define DRIVE_GAIN -4.0
 
 // values tuned for the tentacle valve servos - 130/550
 #define SERVOMIN  130 //150 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  550 //600 // this is the 'maximum' pulse length count (out of 4096)
 
-BME280 bme280Atmospheric;
-BME280 bme280Airbox;
+#ifdef SF
+  BME280 bmp280Atmospheric;
+  BME280 bmp280Airbox;
+#else
+  Adafruit_BMP280 bmp280Atmospheric;
+  Adafruit_BMP280 bmp280Airbox;
+#endif
+
 
 int muxAddressAtmospheric = 4;
 int muxAddressAirbox = 3;
 
-float airboxCal = -213;
-float bellowsCal[] = {-132.36, 379.98, -26.57 }; // by observation
+float airboxCal = -104;;
+float bellowsCal[] = {-18, -47, -53 }; // by observation
+
+#ifdef SF
+void startBmp280(BME280 *b)
+#else
+void startBmp280( Adafruit_BMP280 *b)
+#endif
+
+{
+  #ifdef SF
+  b->setI2CAddress(0x76);
+  if (! b->beginI2C() )
+  {
+    //Serial.print("n "); Serial.print(n);
+    Serial.println("Failed to read BME280 for bellows");
+    delay(1000);
+  }
+  b->setStandbyTime(0); //0 to 7 valid. Time between readings. See table 27.
+
+  b->setTempOverSample(1); //0 to 16 are valid. 0 disables temp sensing. See table 24.
+  b->setPressureOverSample(16); //0 to 16 are valid. 0 disables pressure sensing. See table 23.
+  b->setHumidityOverSample(1); //0 to 16 are valid. 0 disables humidity sensing. See table 19.
+  
+  b->setMode(MODE_NORMAL); //MODE_SLEEP, MODE_FORCED, MODE_NORMAL is valid. See 3.3
+
+  b->setFilter(16); //0 to 4 is valid. Filter coefficient. See 3.4.4
+ 
+  
+  #else
+  if (! b->begin(0x76)) {
+        Serial.println("Could not find a valid BME280 sensor, check wiring!");
+        
+    }
+/*
+    b->setSampling(Adafruit_BMP280::MODE_NORMAL,
+                    Adafruit_BMP280::SAMPLING_X2,  // temperature
+                    Adafruit_BMP280::SAMPLING_X16, // pressure
+                    Adafruit_BMP280::SAMPLING_X1,  // humidity
+                    Adafruit_BMP280::FILTER_X16,
+                    Adafruit_BMP280::STANDBY_MS_0_5 );
+                    */
+  #endif
+
+}
 
 void setupFixedPressures()
 {
     
   muxSelect(muxAddressAtmospheric);
-  bme280Atmospheric.setI2CAddress(0x76);
-  if (! bme280Atmospheric.beginI2C() )
-  {
-    Serial.println("Failed to read BME280 for atmospheric");
-  }
+  startBmp280(&bmp280Atmospheric);
+  
   
   muxSelect(muxAddressAirbox);
-  bme280Airbox.setI2CAddress(0x76);
-  if (! bme280Airbox.beginI2C() )
-  {
-    Serial.println("Failed to read BME280 for airbox");
-  }
+
+  startBmp280(&bmp280Airbox);
+
 }
 
 boolean goodPressure( float pressure )
@@ -46,12 +90,21 @@ boolean goodPressure( float pressure )
 void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
-  atmosphericAbsPressure = bme280Atmospheric.readFloatPressure();
+  #ifdef SF
+  atmosphericAbsPressure = bmp280Atmospheric.readFloatPressure() ;
+  #else
+  atmosphericAbsPressure = bmp280Atmospheric.readPressure();
+  #endif
+  
   if( tracePressures ) { Serial.print(" atmosphericAbsPressure "); Serial.println(atmosphericAbsPressure);}
 
   
   muxSelect(muxAddressAirbox);
-  airboxAbsPressure = bme280Airbox.readFloatPressure() - airboxCal;
+    #ifdef SF
+  airboxAbsPressure = bmp280Airbox.readFloatPressure() - airboxCal;
+  #else
+airboxAbsPressure = bmp280Airbox.readPressure() - airboxCal;
+#endif
 
   if( tracePressures ) { Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);}
 if( tracePressures ) { Serial.print(" airboxdelta  "); Serial.println(airboxAbsPressure - atmosphericAbsPressure);}
@@ -81,21 +134,13 @@ Bellows::Bellows( int _n, float _x, float _y, int _muxAddress, int _inflateServo
   frustration = 0;
 }
 
+
 void Bellows::setup()
 {
   
   muxSelect(muxAddress);
-  bme280.setI2CAddress(0x76);
-  if (! bme280.beginI2C() )
-  {
-    Serial.print("n "); Serial.print(n);
-    Serial.println("Failed to read BME280 for bellows");
-    delay(1000);
-  }
-
- 
-
   
+  startBmp280(&bmp280);
   Serial.print("selftest bellows "); Serial.println(n);
   yield();
   setDrive(-1.0);
@@ -115,8 +160,12 @@ void Bellows::loop()
 {
 
   muxSelect(muxAddress);
-  float pressure = bme280.readFloatPressure() -  bellowsCal[n];
-
+  #ifdef SF
+  float pressure = bmp280.readFloatPressure() -  bellowsCal[n];
+  #else
+  float pressure = bmp280.readPressure() -  bellowsCal[n];
+  #endif
+  
   if( tracePressures ) { Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);}
 
   if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
@@ -176,13 +225,13 @@ void Bellows::setDrive( float d ) // -1.0 to deflate, 1.0 to inflate
   {
     driveServoAngle(inflateServo, drive);
     driveServoAngle(deflateServo, 0.0);
-    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(drive);Serial.print("deflate "); Serial.println(0);}
+    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(drive);Serial.print(" deflate "); Serial.println(0);}
   }
   else // decrease pressure
   {
     driveServoAngle(inflateServo, 0.0);
     driveServoAngle(deflateServo, -drive);
-    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(0);Serial.print("deflate "); Serial.println(-drive);}
+    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(0);Serial.print(" deflate "); Serial.println(-drive);}
 
   }
   

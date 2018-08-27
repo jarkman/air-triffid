@@ -86,7 +86,7 @@ boolean traceBehaviour = true;
 boolean traceBellows = true;
 
 boolean traceNodes = false;
-boolean tracePressures = true;
+boolean tracePressures = false;
 boolean tracePirs = false;
 
 boolean enableBellows = true;  // turn on/off bellows code
@@ -157,10 +157,11 @@ long waveStartT = 0;
 float loopSeconds = 0.1; // duration of our loop() in seconds, used for normalising assorted constants
 
 // pose targets for a boot-time wriggle selftest
-#define SELFTEST_MILLIS (10 * 1000) //10000
+#define SELFTEST_MILLIS (3 * 1000) 
 #define NUM_SELFTEST 5
 // target pressure ratios for chambers
-float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,1.0},{1.0,1.0,1.0}};
+float low = 0.9;
+float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,1.0,low},{low,1.0,1.0},{1.0,low,1.0},{1.0,1.0,1.0}};
 int nextSelftest = -1;
 long selftestStartMillis = -1;
 
@@ -268,21 +269,27 @@ boolean loopSelftest()
     
     if( nextSelftest >= NUM_SELFTEST )
       return false; // selftest done
-
+  }
+  
     int i = 0;
     for( int b = 0; b < BELLOWS; b ++ )
     {
       Bellows *bellow = &(bellows[b]);
-      bellow->targetPressure = baselinePressure * selftest[nextSelftest][i++];  
+      bellow->targetPressure = baselinePressure * selftest[nextSelftest][i++]; 
+            Serial.print("baselinePressure ");
+      Serial.println(baselinePressure);
+  
+      Serial.print("set bellows to ");
+      Serial.println(bellow->targetPressure);
     }
     
-  }
+
   return true;
 }
 
 boolean loopManual()
 {
-  return false;
+  //return false;
 
   
   if( ! gotNunchuck )
@@ -291,13 +298,26 @@ boolean loopManual()
   if( nunchuckIdle())
     return false;
   
-  // TODO - return false when nunchuck idle
   setBendDirection(joyX, joyY);
 
+
+  printBellowsPressures("Manual pressures");
   return true;
 }
 
-
+void printBellowsPressures(char*label)
+{
+  Serial.print(label);
+  Serial.print(" ");
+   for( int b = 0; b < BELLOWS; b ++ )
+   {
+    Bellows *bellow = &(bellows[b]);
+    Serial.print(bellow->targetPressure);
+     Serial.print(" ");
+   }
+   Serial.println(" ");
+  
+}
 void setBendDirection(float x, float y)
 {
   // at 0,0, set all three to nominal pressure
@@ -306,11 +326,10 @@ void setBendDirection(float x, float y)
     Bellows *bellow = &(bellows[b]);
     bendTargetX = x;
     bendTargetY = y;
-    float reduction =  (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
+    float reduction = 0.5* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
     reduction = fconstrain( reduction, 0.0, 1.0 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
-
 
 }
 

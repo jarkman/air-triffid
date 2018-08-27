@@ -1,9 +1,20 @@
+
 #ifndef BELLOWS_H
 #define BELLOWS_H
 
+//#define SF
+
+#ifdef SF
 #include "SparkFunBME280.h"
 // NB - we have frobbed the LibraryManager version of this to support the BMP280 as well as the BME280
 // by adding chip ID 0x58 as an alternative 
+//This was a terrible idea, and we moved to Adafruit's library
+#else
+// Adafruit
+#include <Adafruit_BMP280.h>
+
+#endif
+
 
 class Bellows
 {
@@ -32,7 +43,11 @@ class Bellows
   int muxAddress;
   int inflateServo;
   int deflateServo;
-  BME280 bme280;
+  #ifdef SF
+  BME280 bmp280;
+  #else
+  Adafruit_BMP280 bmp280;
+  #endif
 };
 #endif
 

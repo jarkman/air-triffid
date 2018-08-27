@@ -42,7 +42,7 @@ void loopNunchuck() {
     if( fabs( joyX ) > 0.1 || fabs( joyY ) > 0.1 )
       lastNunchuckTime = millis();
       
-    baselinePressureFraction = fmap(nchuk.pitchAngle(), -180.0, 180.0, 0.0, 1.0 );
+    //baselinePressureFraction = fmap(nchuk.pitchAngle(), -180.0, 180.0, 0.0, 1.0 );
   }
   else {  // Data is bad :(
     Serial.println("Controller Disconnected!");
