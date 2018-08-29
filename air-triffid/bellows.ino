@@ -29,7 +29,7 @@ float bellowsCal[] = {-18, -47, -53 }; // by observation
 #ifdef SF
 void startBmp280(BME280 *b)
 #else
-void startBmp280( Adafruit_BMP280 *b)
+void startBmp280( char* label, Adafruit_BMP280 *b)
 #endif
 
 {
@@ -37,8 +37,8 @@ void startBmp280( Adafruit_BMP280 *b)
   b->setI2CAddress(0x76);
   if (! b->beginI2C() )
   {
-    //Serial.print("n "); Serial.print(n);
-    Serial.println("Failed to read BME280 for bellows");
+    Serial.print(label); Serial.print(" - ");
+    Serial.println("failed to read BMP280");
     delay(1000);
   }
   b->setStandbyTime(0); //0 to 7 valid. Time between readings. See table 27.
@@ -54,9 +54,17 @@ void startBmp280( Adafruit_BMP280 *b)
   
   #else
   if (! b->begin(0x76)) {
-        Serial.println("Could not find a valid BME280 sensor, check wiring!");
+        Serial.print(label); Serial.print(" - ");
+        Serial.println("Could not find a BMP280 sensor");
         
     }
+  else
+  {
+    Serial.print(label); Serial.print(" - ");
+    Serial.print("Found BMP280 sensor");
+    float pressure = bmp280Atmospheric.readPressure();
+    Serial.print("  pressure "); Serial.println(pressure);
+  }
 /*
     b->setSampling(Adafruit_BMP280::MODE_NORMAL,
                     Adafruit_BMP280::SAMPLING_X2,  // temperature
@@ -73,12 +81,12 @@ void setupFixedPressures()
 {
     
   muxSelect(muxAddressAtmospheric);
-  startBmp280(&bmp280Atmospheric);
+  startBmp280("atmospheric", &bmp280Atmospheric);
   
   
   muxSelect(muxAddressAirbox);
 
-  startBmp280(&bmp280Airbox);
+  startBmp280("airbox",&bmp280Airbox);
 
 }
 
@@ -139,8 +147,11 @@ void Bellows::setup()
 {
   
   muxSelect(muxAddress);
-  
-  startBmp280(&bmp280);
+
+  char snum[5];
+
+  itoa(n, snum, 10);
+  startBmp280(snum, &bmp280);
   Serial.print("selftest bellows "); Serial.println(n);
   yield();
   setDrive(-1.0);
@@ -225,13 +236,13 @@ void Bellows::setDrive( float d ) // -1.0 to deflate, 1.0 to inflate
   {
     driveServoAngle(inflateServo, drive);
     driveServoAngle(deflateServo, 0.0);
-    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(drive);Serial.print(" deflate "); Serial.println(0);}
+    if( traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(drive);Serial.print(" deflate "); Serial.println(0);}
   }
   else // decrease pressure
   {
     driveServoAngle(inflateServo, 0.0);
     driveServoAngle(deflateServo, -drive);
-    if( true || traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(0);Serial.print(" deflate "); Serial.println(-drive);}
+    if( traceBellows ){Serial.print(n); Serial.print(" inflate "); Serial.print(0);Serial.print(" deflate "); Serial.println(-drive);}
 
   }
   

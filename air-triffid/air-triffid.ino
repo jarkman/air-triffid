@@ -82,12 +82,14 @@
 #include "bellows.h"
 
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
-boolean traceBehaviour = true;
-boolean traceBellows = true;
+boolean traceBehaviour = false;
+boolean traceBellows = false;
 
 boolean traceNodes = false;
 boolean tracePressures = false;
 boolean tracePirs = false;
+boolean traceNunchuck = true;
+boolean traceSelftest = true;
 
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
@@ -125,7 +127,7 @@ float attentionAmount = 0.0; // 0.0 to 1.1
 
 // UI screens accessible via encoder
 #define UI_STATES 3
-long uiState = 1;
+long uiState = 0; // pirs
 
 char report[80];
 
@@ -157,11 +159,11 @@ long waveStartT = 0;
 float loopSeconds = 0.1; // duration of our loop() in seconds, used for normalising assorted constants
 
 // pose targets for a boot-time wriggle selftest
-#define SELFTEST_MILLIS (3 * 1000) 
+#define SELFTEST_MILLIS (5 * 1000) 
 #define NUM_SELFTEST 5
 // target pressure ratios for chambers
-float low = 0.9;
-float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,1.0,low},{low,1.0,1.0},{1.0,low,1.0},{1.0,1.0,1.0}};
+float low = 0.5;
+float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,1.0,low},{low,1.0,1.0},{1.0,low,1.0}/*,{1.0,low,low},{low,1.0,low},{low,low,1.0}*/,{1.0,1.0,1.0}};
 int nextSelftest = -1;
 long selftestStartMillis = -1;
 
@@ -180,28 +182,36 @@ void setup() {
   Serial.begin(115200);
 
 
-  if( trace ) Serial.println("---Setup---");
-  if( trace ) Serial.println("..i2c");
+  Serial.println("");
+  Serial.println("---Setup---");
+  Serial.println("..i2c");
   setupI2C();
-
+  Serial.println("..pir");
   setupPir();
 
 
+  Serial.println("..fixed pressures");
   setupFixedPressures();
   
+  Serial.println("..servo driver");
   setupServoDriver();
 
+  Serial.println("..encoder");
   setupEncoder();
 
+  Serial.println("..leds");
+  
   setupLeds();
 
+  Serial.println("..nunchuck");
   setupNunchuck();
 
   setupWifi();
   
   //baseServo.attach(D7); 
   //tipServo.attach(D8); 
-
+  Serial.println("..bellows");
+   
   for( int b = 0; b < BELLOWS; b ++ )
   {
     Bellows *bellow = &(bellows[b]);
@@ -210,7 +220,7 @@ void setup() {
   waveStartT = millis();
   breatheStartT = millis();
 
-  
+  Serial.println("..setip done");
 }
 
 void setupServoDriver()
@@ -276,11 +286,15 @@ boolean loopSelftest()
     {
       Bellows *bellow = &(bellows[b]);
       bellow->targetPressure = baselinePressure * selftest[nextSelftest][i++]; 
-            Serial.print("baselinePressure ");
-      Serial.println(baselinePressure);
-  
-      Serial.print("set bellows to ");
-      Serial.println(bellow->targetPressure);
+
+      if( traceSelftest )
+      {
+        Serial.print("baselinePressure ");
+        Serial.println(baselinePressure);
+    
+        Serial.print("set bellows to ");
+        Serial.println(bellow->targetPressure);
+      }
     }
     
 
