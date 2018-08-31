@@ -88,8 +88,8 @@ boolean traceBellows = false;
 boolean traceNodes = false;
 boolean tracePressures = false;
 boolean tracePirs = false;
-boolean traceNunchuck = true;
-boolean traceSelftest = true;
+boolean traceNunchuck = false;
+boolean traceSelftest = false;
 
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
@@ -147,7 +147,8 @@ float breatheAmplitude = 0.2;
 
 float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about what we expect from our blower
 float atmosphericAbsPressure = 0.0; //101000.0; // Pa
-float baselinePressure = 1000.0;
+float nominalMaxPressure = 800.0; // what we expect to make in the airbox
+float baselinePressure = 0.0;
 
 float wavePeriod = 10000.0; // in millis
 float waveFraction = 0.5; // 0 to 1.0
@@ -217,10 +218,13 @@ void setup() {
     Bellows *bellow = &(bellows[b]);
     bellow->setup();
   }
+
+  servoTest();
+  
   waveStartT = millis();
   breatheStartT = millis();
 
-  Serial.println("..setip done");
+  Serial.println("..setup done");
 }
 
 void setupServoDriver()
@@ -254,6 +258,8 @@ float wave(float phaseOffset) // -1.0 to 1.0
 
 boolean loopSelftest()
 {
+  return false;
+  
   if( nextSelftest >= NUM_SELFTEST )
     return false; // selftest done
 
@@ -315,19 +321,31 @@ boolean loopManual()
   setBendDirection(joyX, joyY);
 
 
-  printBellowsPressures("Manual pressures");
+  printBellowsPressures("Manual: ");
   return true;
 }
 
 void printBellowsPressures(char*label)
 {
   Serial.print(label);
-  Serial.print(" ");
+  Serial.print(" Atm: ");
+  Serial.print(atmosphericAbsPressure);
+  Serial.print("  Abx: ");
+  Serial.print(airboxAbsPressure);
+  Serial.print("  Delta: ");
+    Serial.print((int)(airboxAbsPressure-atmosphericAbsPressure));
+  Serial.print("  : ");
    for( int b = 0; b < BELLOWS; b ++ )
    {
     Bellows *bellow = &(bellows[b]);
-    Serial.print(bellow->targetPressure);
-     Serial.print(" ");
+    Serial.print(bellow->n);
+     Serial.print(" T:");
+    Serial.print((int)bellow->targetPressure);
+     Serial.print(" C:");
+    Serial.print((int)bellow->currentPressure);
+      Serial.print(" D:");
+    Serial.print(bellow->drive);
+     Serial.print("    ");
    }
    Serial.println(" ");
   
@@ -341,7 +359,7 @@ void setBendDirection(float x, float y)
     bendTargetX = x;
     bendTargetY = y;
     float reduction = 0.5* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
-    reduction = fconstrain( reduction, 0.0, 1.0 );
+    reduction = fconstrain( reduction, 0.0, 0.5 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
 
@@ -405,8 +423,7 @@ void loop() {
   if( trace ) Serial.println("---Loop---");
   if( trace ) Serial.println("selftest/wave"); 
   if( ! loopManual())
-    if( ! loopSelftest())
-    
+    if( ! loopSelftest())  
       if( ! loopBehaviour())
         loopWave();
 

@@ -29,8 +29,8 @@ Adafruit_NeoPixel strips[] = {Adafruit_NeoPixel(60 * 5 + 72 - 13, D3, NEO_GRB + 
 
 
 float timeOffset = 0; // 0 to 1 over a cycle
-float scrollSpeed = 0.1; // how fast does the pattern move, in seconds per phase
-float ledsPerCycle = 60;
+float scrollSpeed = 0.2; // how fast does the pattern move, in seconds per phase
+float ledsPerCycle = 120;
 
 void colorWipe(Adafruit_NeoPixel *strip, uint32_t c, uint8_t wait);
 
@@ -164,19 +164,19 @@ void sineScroll()
         
         int r = 0;
   
-        float phase = (float) ((i + s * (int) ledsPerCycle / 3) % (int) ledsPerCycle)/ledsPerCycle; // 0->1.0
+        float phase = (float) ((i /*+ s * (int) ledsPerCycle / 3*/) % (int) ledsPerCycle)/ledsPerCycle; // 0->1.0
   
         phase = fmod( phase + timeOffset, 1.0  ); // move it along
         
-        float ig = (sin( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
+        float ig = 0.5 * (sin( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
         //float ib = 1.0 - ig; //(cos( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
         float ib = (cos( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
-        ig = 0.9 * ig + 0.1;
-        ib = 0.9 * ib + 0.1; 
+        //ig = 0.9 * ig + 0.1;
+        //ib = 0.9 * ib + 0.1; 
 
         
-        //uint32_t c = strip->Color(r, (int) (ig*255.0),(int) ( ib*255.0));
-        uint32_t c = strip->Color(255,0,0);
+        uint32_t c = strip->Color(r, (int) (ig*255.0),(int) ( ib*255.0));
+        //uint32_t c = strip->Color(255,0,0);
         strip->setPixelColor(i, c);
       }
       

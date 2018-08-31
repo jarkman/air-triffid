@@ -67,6 +67,7 @@ boolean loopBehaviour()
   {
     // just look at nearest PIR
     setBendAngle( attentionAngle, attentionAmount );
+    printBellowsPressures("Behaviour");
     return true;
   }
 

@@ -5,7 +5,7 @@
 #define SERVO_CLOSE_DEGREES 50.0 //20.0
 #define SERVO_OPEN_DEGREES 130.0
 
-#define DRIVE_GAIN -4.0
+#define DRIVE_GAIN -1.0
 
 // values tuned for the tentacle valve servos - 130/550
 #define SERVOMIN  130 //150 // this is the 'minimum' pulse length count (out of 4096)
@@ -23,8 +23,8 @@
 int muxAddressAtmospheric = 4;
 int muxAddressAirbox = 3;
 
-float airboxCal = -104;;
-float bellowsCal[] = {-18, -47, -53 }; // by observation
+float airboxCal = 0; //-104;;
+float bellowsCal[] = {0,0,0};//{-18, -47, -53 }; // by observation
 
 #ifdef SF
 void startBmp280(BME280 *b)
@@ -98,6 +98,9 @@ boolean goodPressure( float pressure )
 void readFixedPressures()
 {
   muxSelect(muxAddressAtmospheric);
+  startBmp280("atmospheric", &bmp280Atmospheric);
+  
+  
   #ifdef SF
   atmosphericAbsPressure = bmp280Atmospheric.readFloatPressure() ;
   #else
@@ -108,20 +111,23 @@ void readFixedPressures()
 
   
   muxSelect(muxAddressAirbox);
+    startBmp280("muxAddressAirbox", &bmp280Airbox);
+ 
     #ifdef SF
   airboxAbsPressure = bmp280Airbox.readFloatPressure() - airboxCal;
   #else
 airboxAbsPressure = bmp280Airbox.readPressure() - airboxCal;
 #endif
 
-  if( tracePressures ) { Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);}
-if( tracePressures ) { Serial.print(" airboxdelta  "); Serial.println(airboxAbsPressure - atmosphericAbsPressure);}
+  //if( tracePressures ) { Serial.print(" airboxAbsPressure "); Serial.println(airboxAbsPressure);}
+  if( tracePressures ) { Serial.print(" airboxdelta  "); Serial.println(airboxAbsPressure - atmosphericAbsPressure);}
 
 
   if( goodPressure(airboxAbsPressure) && goodPressure(atmosphericAbsPressure))
-    baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction * breatheFraction;
+    //baselinePressure = (airboxAbsPressure - atmosphericAbsPressure) * baselinePressureFraction * breatheFraction;
+    baselinePressure = nominalMaxPressure * baselinePressureFraction * breatheFraction;
   else
-    baselinePressure = 1000.0 * baselinePressureFraction * breatheFraction;
+    baselinePressure = nominalMaxPressure * baselinePressureFraction * breatheFraction;
 
   if( tracePressures ) { Serial.print(" baselinePressure "); Serial.println(baselinePressure);}
 
@@ -152,18 +158,36 @@ void Bellows::setup()
 
   itoa(n, snum, 10);
   startBmp280(snum, &bmp280);
-  Serial.print("selftest bellows "); Serial.println(n);
-  yield();
-  setDrive(-1.0);
-  delay(500);
-  yield(); 
-  delay(500);
-  yield();
-  setDrive(1.0);
-  delay(500);
-  yield();
-  delay(500);
-  yield();
+}
+
+void servoTest()
+{
+  Serial.println("selftest bellows ");
+  for( int i = 0; i < 3; i++ )
+  {
+    Serial.println("Deflate");
+    yield();
+    for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->setDrive(-1.0);
+    }
+    delay(500);
+    yield(); 
+    delay(500);
+    yield();
+    Serial.println("Inflate");
+    for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->setDrive(1.0);
+    }
+    
+    delay(500);
+    yield();
+    delay(500);
+    yield();
+  }
   
 }
 
@@ -171,6 +195,10 @@ void Bellows::loop()
 {
 
   muxSelect(muxAddress);
+
+  startBmp280("bellows", &bmp280);
+
+ 
   #ifdef SF
   float pressure = bmp280.readFloatPressure() -  bellowsCal[n];
   #else
@@ -202,7 +230,7 @@ void Bellows::loop()
     error = (targetPressure - currentPressure)/baselinePressure;
   }
 
-  float drive = - error * DRIVE_GAIN;
+  float d = - error * DRIVE_GAIN;
 
   //drive = 1.0;
 
@@ -220,7 +248,7 @@ void Bellows::loop()
     frustration += error * loopSeconds;
       
   // simple linear feedback
-  setDrive( drive );
+  setDrive( d );
   
 }
 
