@@ -81,6 +81,8 @@
 
 #include "bellows.h"
 
+boolean openLoop = true;
+
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = false;
 boolean traceBellows = false;
@@ -327,6 +329,22 @@ boolean loopManual()
 
 void printBellowsPressures(char*label)
 {
+  if( openLoop )
+  {
+    Serial.print(label);
+    for( int b = 0; b < BELLOWS; b ++ )
+   {
+    Bellows *bellow = &(bellows[b]);
+    Serial.print(bellow->n);
+     Serial.print(" R: ");
+    Serial.print(bellow->reduction);
+   }
+
+   
+  Serial.println(" ");
+    return;
+    
+  }
   Serial.print(label);
   Serial.print(" Atm: ");
   Serial.print(atmosphericAbsPressure);
@@ -335,6 +353,8 @@ void printBellowsPressures(char*label)
   Serial.print("  Delta: ");
     Serial.print((int)(airboxAbsPressure-atmosphericAbsPressure));
   Serial.print("  : ");
+
+  
    for( int b = 0; b < BELLOWS; b ++ )
    {
     Bellows *bellow = &(bellows[b]);
@@ -359,7 +379,7 @@ void setBendDirection(float x, float y)
     bendTargetX = x;
     bendTargetY = y;
     float reduction = 0.5* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
-    reduction = fconstrain( reduction, 0.0, 0.5 );
+    bellow->reduction = fconstrain( reduction, 0.0, 0.5 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
 

@@ -97,6 +97,10 @@ boolean goodPressure( float pressure )
 
 void readFixedPressures()
 {
+  
+  if( openLoop )
+    return;
+    
   muxSelect(muxAddressAtmospheric);
   startBmp280("atmospheric", &bmp280Atmospheric);
   
@@ -191,9 +195,23 @@ void servoTest()
   
 }
 
+long openLoopPeriod = 5000;
+
 void Bellows::loop()
 {
 
+
+  if( openLoop )
+  {
+
+     float phase = (float)(millis() % openLoopPeriod)/(float)openLoopPeriod;
+    if( phase < reduction )
+      setDrive(-0.4);
+    else
+      setDrive(1.0);
+    return;
+  }
+  
   muxSelect(muxAddress);
 
   startBmp280("bellows", &bmp280);
@@ -204,7 +222,7 @@ void Bellows::loop()
   #else
   float pressure = bmp280.readPressure() -  bellowsCal[n];
   #endif
-  
+
   if( tracePressures ) { Serial.print("n "); Serial.print(n);  Serial.print(" pressure "); Serial.println(pressure);}
 
   if( ! goodPressure( pressure ) || ! goodPressure( atmosphericAbsPressure ))
@@ -317,6 +335,8 @@ int printOneBellows( int y, int fh, Bellows*b )
 
 void  printBellows(  )
 {
+
+  
   int fh = oled.getFontHeight();
   int y = 0;
 

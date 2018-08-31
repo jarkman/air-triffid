@@ -37,6 +37,7 @@ class Bellows
   float x;
   float y;
   float drive;
+  float reduction;
   
   private:
   
