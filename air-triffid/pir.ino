@@ -89,9 +89,9 @@ float angleDelta( float from, float to )
   // return clockwise angle from from to to, in the range -180 to 180
   float d = to - from ;
   while( d > 180.0 )
-    d -= 180.0;
+    d -= 360.0;
    while( d < -180.0 )
-    d += 180.0;
+    d += 360.0;
 
    return d;
 }

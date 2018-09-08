@@ -5,7 +5,7 @@
 // Causes a compile error, documented here: https://github.com/esp8266/Arduino/issues/398
 
 
-
+#define DO_WIFI
 
 
 #ifndef DO_WIFI

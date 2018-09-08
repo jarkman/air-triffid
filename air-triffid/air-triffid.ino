@@ -1,3 +1,10 @@
+
+
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+
+
 #include <NintendoExtensionCtrl.h>
 
 
@@ -69,8 +76,6 @@
 // 4: atmospheric pressure BMP280 (on control board)
 
 
-
-#include "Node.h"
 #include <Wire.h>
 //#include <Servo.h>
 #include <SFE_MicroOLED.h>  // Include the SFE_MicroOLED library
@@ -425,6 +430,10 @@ void loop() {
 
   long start = millis();
 
+  int result = Wire.endTransmission(true);
+  Serial.print("i2c reset result "); Serial.println(result);
+  // ew get 4 when our odd things happens
+  
   loopBreathe();
   loopWifi();
   loopPir();
