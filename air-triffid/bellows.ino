@@ -2,7 +2,7 @@
 
 
 // Servo pos for valve open/close
-#define SERVO_CLOSE_DEGREES 50.0 //20.0
+#define SERVO_CLOSE_DEGREES 40.0 
 #define SERVO_OPEN_DEGREES 130.0
 
 #define DRIVE_GAIN -1.0
@@ -24,7 +24,7 @@ int muxAddressAtmospheric = 4;
 int muxAddressAirbox = 3;
 
 float airboxCal = 0; //-104;;
-float bellowsCal[] = {0,0,0};//{-18, -47, -53 }; // by observation
+float bellowsCal[] = {10, -47, -53 }; // by observation
 
 #ifdef SF
 void startBmp280(BME280 *b)
@@ -60,10 +60,10 @@ void startBmp280( char* label, Adafruit_BMP280 *b)
     }
   else
   {
-    Serial.print(label); Serial.print(" - ");
+    /*Serial.print(label); Serial.print(" - ");
     Serial.print("Found BMP280 sensor");
     float pressure = bmp280Atmospheric.readPressure();
-    Serial.print("  pressure "); Serial.println(pressure);
+    Serial.print("  pressure "); Serial.println(pressure);*/
   }
 /*
     b->setSampling(Adafruit_BMP280::MODE_NORMAL,
@@ -102,7 +102,8 @@ void readFixedPressures()
     return;
     
   muxSelect(muxAddressAtmospheric);
-  startBmp280("atmospheric", &bmp280Atmospheric);
+  
+  if( alwaysRestartSensors ) startBmp280("atmospheric", &bmp280Atmospheric);
   
   
   #ifdef SF
@@ -115,7 +116,8 @@ void readFixedPressures()
 
   
   muxSelect(muxAddressAirbox);
-    startBmp280("muxAddressAirbox", &bmp280Airbox);
+  
+  if( alwaysRestartSensors ) startBmp280("muxAddressAirbox", &bmp280Airbox);
  
     #ifdef SF
   airboxAbsPressure = bmp280Airbox.readFloatPressure() - airboxCal;
@@ -175,6 +177,10 @@ void servoTest()
     {
       Bellows *bellow = &(bellows[b]);
       bellow->setDrive(-1.0);
+      /*delay(500);
+      yield(); 
+      delay(500);
+      yield();*/
     }
     delay(500);
     yield(); 
@@ -185,6 +191,10 @@ void servoTest()
     {
       Bellows *bellow = &(bellows[b]);
       bellow->setDrive(1.0);
+      /*delay(500);
+      yield(); 
+      delay(500);
+      yield();*/
     }
     
     delay(500);
@@ -214,7 +224,7 @@ void Bellows::loop()
   
   muxSelect(muxAddress);
 
-  startBmp280("bellows", &bmp280);
+  if( alwaysRestartSensors ) startBmp280("bellows", &bmp280);
 
  
   #ifdef SF

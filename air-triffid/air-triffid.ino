@@ -81,14 +81,15 @@
 
 #include "bellows.h"
 
-boolean openLoop = true;
+boolean openLoop = false; // run without using pressure sensors, using duty-cycle modulation on the valves
+boolean alwaysRestartSensors = false;
 
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
 boolean traceBehaviour = false;
 boolean traceBellows = false;
 
 boolean traceNodes = false;
-boolean tracePressures = false;
+boolean tracePressures = true;
 boolean tracePirs = false;
 boolean traceNunchuck = false;
 boolean traceSelftest = false;
@@ -129,7 +130,9 @@ float attentionAmount = 0.0; // 0.0 to 1.1
 
 // UI screens accessible via encoder
 #define UI_STATES 3
-long uiState = 0; // pirs
+// 0 - pirs
+// 1 - pressures
+long uiState = 1; // pirs
 
 char report[80];
 

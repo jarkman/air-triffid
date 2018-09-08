@@ -4,9 +4,11 @@ Nunchuk nchuk;
 
 long lastNunchuckTime = 0;
 
+#define NUNCHUCK_ADDRESS 5
+
 void setupNunchuck() {
 
-    noMux();
+  muxSelect(NUNCHUCK_ADDRESS);
   nchuk.begin();
 
   if (!nchuk.connect()) {
@@ -18,6 +20,9 @@ void setupNunchuck() {
     gotNunchuck = true;
     
   }
+
+  noMux();
+  
 }
 
 boolean nunchuckIdle()
@@ -32,7 +37,10 @@ void loopNunchuck() {
     if( traceNunchuck) Serial.println("no nunchuck");
     return;
   } 
-    noMux();
+
+
+  muxSelect(NUNCHUCK_ADDRESS);
+    
   boolean success = nchuk.update();  // Get new data from the controller
 
   if (success == true) {  // We've got data!
@@ -50,4 +58,6 @@ void loopNunchuck() {
     joyX = 0.0;
     joyY = 0.0;
   }
+
+  noMux();
 }
