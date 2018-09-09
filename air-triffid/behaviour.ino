@@ -67,6 +67,13 @@ boolean loopBehaviour()
   {
     // just look at nearest PIR
     setBendAngle( attentionAngle, attentionAmount );
+    Serial.print("attentionAngle ");
+    Serial.print(attentionAngle);
+    Serial.print(" attentionAmount ");
+    Serial.print(attentionAmount);
+    Serial.print(" ");
+    
+    
     printBellowsPressures("Behaviour");
     return true;
   }

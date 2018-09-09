@@ -58,19 +58,39 @@ void loopPir()
    
   float totalActivity = 0.0;
   float maxActivity = 0.0;
+  int maxP = -1;
   
   for( int p = 0; p < PIRS; p++)
   {
     totalActivity += pirActivity[p];
     if( pirActivity[p] > maxActivity )
+    {
       maxActivity = pirActivity[p];
+      maxP = p;
+    }
   }  
 
+
+  // go instantly to most energetic PIR
+  if( maxP < 0 )
+  {
+    attentionAmount = 0.0;
+    attentionAngle = 0;
+  }
+  else
+  {
+    attentionAmount = pirActivity[maxP];
+    attentionAngle = pirAngle[maxP];
+  }
+
+  
+  /*
+  // weight PIRs together
   for( int p = 0; p < PIRS; p++)
     moveAttention( pirAngle[p], pirActivity[p], totalActivity );
 
   attentionAmount = attentionAmount * 0.9 + maxActivity * 0.1; 
-
+  */
   
 }
 

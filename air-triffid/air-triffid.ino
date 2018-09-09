@@ -94,7 +94,7 @@ boolean traceBehaviour = false;
 boolean traceBellows = false;
 
 boolean traceNodes = false;
-boolean tracePressures = true;
+boolean tracePressures = false;
 boolean tracePirs = false;
 boolean traceNunchuck = false;
 boolean traceSelftest = false;
@@ -152,8 +152,14 @@ float baselinePressureFraction = 1.0;
 float breatheFraction = 1.0;
 
 long breatheStartT = 0;
-float breathePeriod = 20000.0; // in millis
-float breatheAmplitude = 0.2;
+float breathePeriod = 10000.0; // in millis
+float breatheAmplitude = 0.1;
+
+float maxGoodPressure = 101000.0 + 1500.0; // Pa, about what we expect from our blower
+float minGoodPressure = 101000.0 - 1500.0;
+
+boolean i2cIsSickly = false; // have we had terrible pressure readings suggesting the i2c bus is mad ?
+
 
 float airboxAbsPressure = 0.0; //101000.0 + 1500.0; // Pa, about what we expect from our blower
 float atmosphericAbsPressure = 0.0; //101000.0; // Pa
@@ -229,7 +235,7 @@ void setup() {
     bellow->setup();
   }
 
-  servoTest();
+  //servoTest();
   
   waveStartT = millis();
   breatheStartT = millis();
@@ -386,7 +392,7 @@ void setBendDirection(float x, float y)
     Bellows *bellow = &(bellows[b]);
     bendTargetX = x;
     bendTargetY = y;
-    float reduction = 0.5* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
+    float reduction = 0.4* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
     bellow->reduction = fconstrain( reduction, 0.0, 0.5 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
@@ -426,14 +432,60 @@ void loopWave()
   */
 
 }
+
+int i2cResetCount = 0;
+
+void manageI2C()
+{
+  if( ! i2cIsSickly )
+    return;
+
+  int fails = 0;
+
+  i2cResetCount ++;
+
+  Serial.print("i2c reset # ");  Serial.println(i2cResetCount);
+
+  
+  noMux();
+  int i2cResult = Wire.endTransmission(true);
+  Serial.print("i2c master reset"); Serial.print(" - " ); Serial.println(i2cResult);
+  // we get 4 when our odd things happens
+  if( i2cResult != 0 )
+  {
+    fails ++;
+    delay( 500 );
+    yield();
+  } 
+  for( int m = 0; m < 8; m ++ )
+  {
+    
+    muxSelect( m );
+    int i2cResult = Wire.endTransmission(true);
+    Serial.print("i2c reset result mux "); Serial.print(m); Serial.print(" - " ); Serial.println(i2cResult);
+    // we get 4 when our odd things happens
+    if( i2cResult != 0 )
+    {
+      fails ++;
+      delay( 500 );
+      yield();
+    } 
+  }
+
+
+
+      
+  if( fails == 0 )
+      i2cIsSickly = false; //this is set when we read bad pressure numbers
+
+}
+
 void loop() {
 
   long start = millis();
 
-  int result = Wire.endTransmission(true);
-  Serial.print("i2c reset result "); Serial.println(result);
-  // ew get 4 when our odd things happens
-  
+  manageI2C();
+ 
   loopBreathe();
   loopWifi();
   loopPir();

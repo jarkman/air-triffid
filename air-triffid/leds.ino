@@ -140,7 +140,12 @@ void tipPulse()
         float ir = brightness;
         float ig = 0;
         float ib = 0;
-       
+
+        if( i2cIsSickly ) // flag up i2c trouble by making tip blue
+        {
+          ir = 0;
+          ig = brightness;
+        }
         
         uint32_t c = strip->Color((int) (ir*255.0), (int) (ig*255.0),(int) ( ib*255.0));
         strip->setPixelColor(i, c);
