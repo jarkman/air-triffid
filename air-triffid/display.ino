@@ -8,7 +8,7 @@ void setupDisplay()
     Serial.println("Display disabled !!!!!!!!!!!!!!!");
     return;
   }
-    
+
   noMux();
   
   oled.begin();     // Initialize the OLED
@@ -30,7 +30,7 @@ void loopDisplay()
 {
   if( ! enableDisplay )
     return;
-
+  
   noMux();
   
   oled.clear(PAGE); // Clear the display's internal memory
@@ -53,8 +53,7 @@ void loopDisplay()
   
 
   oled.display();   
-
-
+ 
 }
 
 

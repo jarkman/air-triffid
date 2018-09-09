@@ -187,7 +187,8 @@ long selftestStartMillis = -1;
 void setupI2C()
 {
   Wire.begin();
-  Wire.setClock(10000);  // 10k for a 10m wire length limit
+  Wire.setClock(10000);  // 10k for a 10m wire length limit - esp seems to ignore this! Currently getting a 53khz clock
+  Wire.setClockStretchLimit(40000); 
 }
 
 
@@ -566,6 +567,7 @@ float fconstrain(float f, float out_min, float out_max)
  
 void muxSelect(uint8_t i) {
   uint8_t m0;
+  delay(10); // let i2cc calm down - totally speculative
   
   if( i== NO_MUX )
   {
