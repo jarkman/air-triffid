@@ -21,6 +21,7 @@ void setupNunchuck() {
     
   }
 
+  lastNunchuckTime = millis();
   noMux();
   
 }

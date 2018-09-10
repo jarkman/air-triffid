@@ -66,10 +66,11 @@
 // and beyond the mux:
 //  LSM303 : 0x19 & 0x1E
 //  BMP280: 0x76
+//  ADS1015 for supermanual control: 0x48 
 
 
 // Mux channels:
-// 0: bellows 0  BMP280 and low LSM303
+// 0: bellows 0  BMP280 and low LSM303 and ADS1015
 // 1: bellows 1  BMP280 and high LSM303
 // 2: bellows 2  BMP280
 // 3: airbox pressure BMP280
@@ -103,6 +104,7 @@ boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
 boolean calibrateCompasses = false; // turn on then rotate each compass smoothly about all axes to get the individual compass min/max values for compass setup
 
+bool disablePressureFeedback = false; // turned off by supermanual
 
 
 void setupNodes();
@@ -128,6 +130,7 @@ Bellows bellows[] = {Bellows(0, 0.0,                     1.0,                   
                      Bellows(2, -sin(30.0*3.1415/180.0), -cos(30.0*3.1415/180.0), 2, 4, 5)};
 
 
+float supermanual[]={0,0,0};
 
 float attentionAngle = 0.0; // net attention direction, degrees clockwise from bellows 0
 float attentionAmount = 0.0; // 0.0 to 1.1
@@ -224,6 +227,10 @@ void setup() {
   Serial.println("..nunchuck");
   setupNunchuck();
 
+  Serial.println("..supermanual");
+  setupSupermanual();
+  
+  Serial.println("..wifi");
   setupWifi();
   
   //baseServo.attach(D7); 
@@ -276,7 +283,6 @@ float wave(float phaseOffset) // -1.0 to 1.0
 boolean loopSelftest()
 {
   return false;
-  
   if( nextSelftest >= NUM_SELFTEST )
     return false; // selftest done
 
@@ -339,6 +345,43 @@ boolean loopManual()
 
 
   printBellowsPressures("Manual: ");
+  return true;
+}
+
+boolean loopSupermanualControl()
+{
+
+  if( supermanualIdle())
+  {
+    disablePressureFeedback = false;
+    return false;
+  }
+
+  boolean supermanualDrive = true; // true to control drive, false to control pressure
+  
+  if( supermanualDrive )
+  {
+    for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->setDrive(supermanual[b]);
+    }
+  
+    disablePressureFeedback = true;
+    printBellowsPressures("Supermanual drive: ");
+  }
+  else
+  { // pressure
+    for( int b = 0; b < BELLOWS; b ++ )
+    {
+      Bellows *bellow = &(bellows[b]);
+      bellow->setDrive(supermanual[b]);
+      bellow->targetPressure = baselinePressure * fmap( supermanual[b], -1.0, 1.0, 0.0, 1.0); 
+    }
+  
+    
+    printBellowsPressures("Supermanual pressure: ");
+  }
   return true;
 }
 
@@ -496,6 +539,7 @@ void loop() {
   loopLeds();
 
   loopNunchuck();
+  loopSupermanual();
  
 
   //delay(100);
@@ -508,9 +552,10 @@ void loop() {
   if( trace ) Serial.println("---Loop---");
   if( trace ) Serial.println("selftest/wave"); 
   if( ! loopManual())
-    if( ! loopSelftest())  
-      if( ! loopBehaviour())
-        loopWave();
+    if( ! loopSupermanualControl())
+      if( ! loopSelftest())  
+        if( ! loopBehaviour())
+          loopWave();
 
 
   for( int b = 0; b < BELLOWS; b ++ )

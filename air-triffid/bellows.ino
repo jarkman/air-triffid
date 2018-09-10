@@ -232,6 +232,8 @@ long openLoopPeriod = 5000;
 void Bellows::loop()
 {
 
+  if( disablePressureFeedback )
+    return; // means we are in supermanual
 
   if( openLoop )
   {
