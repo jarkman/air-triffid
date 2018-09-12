@@ -30,9 +30,12 @@ void setupSupermanual(void)
   // ads.setGain(GAIN_EIGHT);      // 8x gain   +/- 0.512V  1 bit = 0.25mV   0.015625mV
   // ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/- 0.256V  1 bit = 0.125mV  0.0078125mV
 
+ 
   lastSupermanualTime = millis();
   muxSelect(0);
   ads.begin();
+  ads.setGain(GAIN_ONE);        // 1x gain   +/- 4.096V
+
   noMux();
 }
 
@@ -48,7 +51,7 @@ void loopSupermanual()
 
   for( int i = 0; i < 3; i ++)
   {
-      float x = fmap( ads.readADC_SingleEnded(i), -1.0, 1.0, -1.0, 1.0 );
+      float x = fmap( ads.readADC_SingleEnded(3-i), -1.0, 1.0, -1.0, 1.0 );
 
       if( fabs(supermanual[i] - x) > 0.05 )
         lastSupermanualTime = millis();
@@ -57,7 +60,11 @@ void loopSupermanual()
       Serial.print(i); Serial.print(":"); Serial.print(x); Serial.print("  ");
   }
 
+  float x = fmap( ads.readADC_SingleEnded(0), -1.0, 1.0, -1.0, 1.0 );
+  Serial.print("mode"); Serial.print(":"); Serial.print(x); Serial.print("  ");
   Serial.println(" ");
+
+  supermanualDrive = x > 0.0; // control drive as opposed to pressure
   
   noMux();
 }

@@ -169,6 +169,9 @@ float atmosphericAbsPressure = 0.0; //101000.0; // Pa
 float nominalMaxPressure = 800.0; // what we expect to make in the airbox
 float baselinePressure = 0.0;
 
+boolean supermanualDrive = true; // true to control drive, false to control pressure
+
+ 
 float wavePeriod = 10000.0; // in millis
 float waveFraction = 0.5; // 0 to 1.0
 
@@ -357,8 +360,7 @@ boolean loopSupermanualControl()
     return false;
   }
 
-  boolean supermanualDrive = true; // true to control drive, false to control pressure
-  
+   
   if( supermanualDrive )
   {
     for( int b = 0; b < BELLOWS; b ++ )
