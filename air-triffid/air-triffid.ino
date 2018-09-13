@@ -149,6 +149,10 @@ float bendTargetY = 0.0;
 
 boolean gotNunchuck = false;
 
+boolean gotSupermanual = false;
+boolean supermanualDrive = true; // true to control drive, false to control pressure
+
+
 float joyX = 0.0; // -1.0 to 1.0
 float joyY = 0.0;
 float baselinePressureFraction = 1.0;
@@ -169,7 +173,6 @@ float atmosphericAbsPressure = 0.0; //101000.0; // Pa
 float nominalMaxPressure = 800.0; // what we expect to make in the airbox
 float baselinePressure = 0.0;
 
-boolean supermanualDrive = true; // true to control drive, false to control pressure
 
  
 float wavePeriod = 10000.0; // in millis
@@ -354,7 +357,7 @@ boolean loopManual()
 boolean loopSupermanualControl()
 {
 
-  if( supermanualIdle())
+  if( ! gotSupermanual || supermanualIdle())
   {
     disablePressureFeedback = false;
     return false;

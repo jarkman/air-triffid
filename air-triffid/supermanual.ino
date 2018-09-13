@@ -9,6 +9,8 @@ Adafruit_ADS1015 ads;     /* Use thi for the 12-bit version */
 
 
 long lastSupermanualTime = 0;
+float minAdc = 0.0;
+float maxAdc = 1650.0;
 
 void setupSupermanual(void) 
 {
@@ -49,10 +51,18 @@ void loopSupermanual()
   
   muxSelect(0);
 
+  gotSupermanual = true;
+  
   for( int i = 0; i < 3; i ++)
   {
-      float x = fmap( ads.readADC_SingleEnded(3-i), -1.0, 1.0, -1.0, 1.0 );
+      float x = fmap( ads.readADC_SingleEnded(i+1), minAdc, maxAdc, -1.0, 1.0 );
 
+      if( x > 1.1 )
+      {
+        gotSupermanual = false;
+        return;
+      }
+      
       if( fabs(supermanual[i] - x) > 0.05 )
         lastSupermanualTime = millis();
         
@@ -60,7 +70,7 @@ void loopSupermanual()
       Serial.print(i); Serial.print(":"); Serial.print(x); Serial.print("  ");
   }
 
-  float x = fmap( ads.readADC_SingleEnded(0), -1.0, 1.0, -1.0, 1.0 );
+  float x = fmap( ads.readADC_SingleEnded(0), minAdc, maxAdc, -1.0, 1.0 );
   Serial.print("mode"); Serial.print(":"); Serial.print(x); Serial.print("  ");
   Serial.println(" ");
 
