@@ -33,7 +33,7 @@ void setupSupermanual(void)
   // ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/- 0.256V  1 bit = 0.125mV  0.0078125mV
 
  
-  lastSupermanualTime = millis();
+  lastSupermanualTime = millis() - 20000;
   muxSelect(0);
   ads.begin();
   ads.setGain(GAIN_ONE);        // 1x gain   +/- 4.096V
@@ -46,20 +46,23 @@ boolean supermanualIdle()
   return millis() - lastSupermanualTime > 20000;
 } 
 
+int adcForBellows[] = {2, 1, 3}; // make slider layout match bellow layout, assuming user is standing behind blower
 void loopSupermanual() 
 {
   
   muxSelect(0);
 
   gotSupermanual = true;
-  
+
+  startT(TSLIDERS);
   for( int i = 0; i < 3; i ++)
   {
-      float x = fmap( ads.readADC_SingleEnded(i+1), minAdc, maxAdc, -1.0, 1.0 );
+      float x = fmap( ads.readADC_SingleEnded(adcForBellows[i]), minAdc, maxAdc, -1.0, 1.0 );
 
       if( x > 1.1 )
       {
         gotSupermanual = false;
+        endT();
         return;
       }
       
@@ -67,14 +70,16 @@ void loopSupermanual()
         lastSupermanualTime = millis();
         
       supermanual[i] = x;
-      Serial.print(i); Serial.print(":"); Serial.print(x); Serial.print("  ");
+      if( traceSupermanual ) {Serial.print(i); Serial.print(":"); Serial.print(x); Serial.print("  ");}
   }
 
   float x = fmap( ads.readADC_SingleEnded(0), minAdc, maxAdc, -1.0, 1.0 );
-  Serial.print("mode"); Serial.print(":"); Serial.print(x); Serial.print("  ");
-  Serial.println(" ");
+  if( traceSupermanual ) {Serial.print("mode"); Serial.print(":"); Serial.print(x); Serial.print("  "); Serial.println(" ");}
+  
 
   supermanualDrive = x > 0.0; // control drive as opposed to pressure
+
+  endT();
   
   noMux();
 }

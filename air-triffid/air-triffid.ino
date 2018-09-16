@@ -91,6 +91,7 @@ boolean openLoop = false; // run without using pressure sensors, using duty-cycl
 boolean alwaysRestartSensors = false;
 
 boolean trace = false;          // activity tracing for finding crashes - leave off to get better response times
+boolean traceTime = false;      // time logging for our major consumers
 boolean traceBehaviour = false;
 boolean traceBellows = false;
 
@@ -98,7 +99,13 @@ boolean traceNodes = false;
 boolean tracePressures = false;
 boolean tracePirs = false;
 boolean traceNunchuck = false;
+boolean traceSupermanual = false;
 boolean traceSelftest = false;
+
+boolean enableDisplay = false; // costs about 200ms / loop
+
+boolean enableLeds = false; // costs about 150ms / loop, of which 100 is sin/cos fns
+
 
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
@@ -192,6 +199,27 @@ float low = 0.5;
 float selftest[NUM_SELFTEST][3] = {{1.0,1.0,1.0},{1.0,1.0,low},{low,1.0,1.0},{1.0,low,1.0}/*,{1.0,low,low},{low,1.0,low},{low,low,1.0}*/,{1.0,1.0,1.0}};
 int nextSelftest = -1;
 long selftestStartMillis = -1;
+
+
+// time profiling
+
+
+#define TPRESSURE 0
+#define TSERVO 1
+#define TNUNCHUCK 2
+#define TSLIDERS 3
+#define TDISPLAY 4
+#define TMUX 5
+#define TLEDS 6
+
+#define NBINS 7
+
+String tName[] = {"Pressure", "Servos", "Nunchuck", "Sliders", "Display", "Mux", "LEDs"};
+long tBin[NBINS];
+long binStart;
+int currentBin = -1;
+
+
 
 void setupI2C()
 {
@@ -390,8 +418,14 @@ boolean loopSupermanualControl()
   return true;
 }
 
+long lastPrintBellowsPressures = 0;
 void printBellowsPressures(char*label)
 {
+  if( millis() - lastPrintBellowsPressures < 1000 )
+    return;
+
+  lastPrintBellowsPressures = millis();
+    
   if( openLoop )
   {
     Serial.print(label);
@@ -405,6 +439,7 @@ void printBellowsPressures(char*label)
 
    
   Serial.println(" ");
+  
     return;
     
   }
@@ -455,6 +490,9 @@ void setBendAngle( float angle, float amount )
 
 void loopWave()
 {
+  float angle = fmod( (((float) millis()) /  10000.0), 1.0 ) * 360.0 ;
+  setBendAngle( angle, 0.2 );
+  printBellowsPressures("Wave: ");
    /*
   //float controlVal = analogRead(controlPotPin);   
 
@@ -570,12 +608,12 @@ void loop() {
     }
 
   long end = millis();
-  if( trace ){ Serial.print("loop took ") ; Serial.println( end-start );}
+  if( traceTime ) {Serial.print("loop took ") ; Serial.println( end-start );}
 
   loopSeconds = 0.001 * (float)( end-start );
   
-
-   delay(50);
+  if( traceTime ) {printT();}
+  
 }
 
 
@@ -617,7 +655,7 @@ float fconstrain(float f, float out_min, float out_max)
  
 void muxSelect(uint8_t i) {
   uint8_t m0;
-  delay(10); // let i2cc calm down - totally speculative
+  //delay(10); // let i2cc calm down - totally speculative
   
   if( i== NO_MUX )
   {
@@ -632,11 +670,11 @@ void muxSelect(uint8_t i) {
  
   }
  
- 
+ startT(TMUX);
   Wire.beginTransmission(TCAADDR0);
   Wire.write(m0);
   Wire.endTransmission(); 
-  
+  endT();
  
 }
 
@@ -646,5 +684,56 @@ void noMux()
   muxSelect( NO_MUX );
 }
 
+
+
+void clearT()
+{
+  for( int i = 0; i< NBINS; i ++)
+    tBin[i] = 0;
+}
+
+void printT()
+{
+  long total = 0;
+  
+  for( int i = 0; i< NBINS; i ++)
+  {
+    
+    total += tBin[i];
+  }
+  
+  for( int i = 0; i< NBINS; i ++)
+  {
+    Serial.print( tName[i] );
+    Serial.print( " : ");
+    Serial.print(tBin[i] /1000);
+    Serial.print( " ms ");
+    Serial.print((100 * tBin[i]) /total);
+    Serial.println( " %");
+    
+  }
+
+  Serial.print( "Total : ");
+  Serial.print(total/1000 );
+  Serial.println( " ms ");
+  
+  clearT();
+}
+
+
+void startT(int bin)
+{
+  currentBin = bin;
+  binStart = micros();
+  
+}
+
+void endT()
+{
+  if( currentBin < 0 )
+    return;
+
+  tBin[currentBin] += micros() - binStart;
+}
 
 

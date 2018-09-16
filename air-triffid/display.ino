@@ -1,5 +1,3 @@
-boolean enableDisplay = false;
-
 
 void setupDisplay()
 {
@@ -29,10 +27,15 @@ void setupDisplay()
 void loopDisplay()
 {
   if( ! enableDisplay )
+  {
+    startT(TDISPLAY);
+    endT();
     return;
+  }
   
   noMux();
-  
+
+  startT(TDISPLAY);
   oled.clear(PAGE); // Clear the display's internal memory
   
   oled.setFontType(0);
@@ -53,6 +56,8 @@ void loopDisplay()
   
 
   oled.display();   
+
+ endT();
  
 }
 

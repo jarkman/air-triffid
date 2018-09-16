@@ -85,10 +85,14 @@ void startBmp280( char* label, Adafruit_BMP280 *b)
 
 float readBmp280( Adafruit_BMP280 *b )
 {
+  startT(TPRESSURE);
+  
   float p = b->readPressure();   
   if( ! goodPressure( p ))
     i2cIsSickly = true;
 
+  endT();
+  
   return p;
 }
 
@@ -328,9 +332,10 @@ void Bellows::driveServoAngle(int servoNum, float openFraction, float offset)
   float pulseLen = fmap( servoAngle, 0, 180, SERVOMIN, SERVOMAX ); // map angle to pulse length in PWM count units
 
   noMux();
-  
+
+  startT(TSERVO);
   pwm.setPWM(servoNum, 0, pulseLen);
-  
+  endT();
 
 }
 

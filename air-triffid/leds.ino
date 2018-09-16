@@ -34,6 +34,16 @@ float ledsPerCycle = 120;
 
 void colorWipe(Adafruit_NeoPixel *strip, uint32_t c, uint8_t wait);
 
+float fastsin( float theta )
+{
+  // we save about 100ms per loop by not calling sin/cos
+  return sin(theta);
+}
+
+float fastcos( float theta )
+{
+  return cos(theta);
+}
 
 void setupLeds() {
   // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
@@ -109,10 +119,18 @@ void colorWipe(Adafruit_NeoPixel *strip, uint32_t c, uint8_t wait) {
 
 void loopLeds()
 {
-    
+
+  if( ! enableLeds ) // saves 150ms/loop
+  {
+    startT(TLEDS);
+    endT();
+    return;
+  }
+  
   if( trace ) Serial.println("---loopLeds---");
     yield();
 
+  startT(TLEDS);
   sineScroll();
   tipPulse();
 
@@ -121,6 +139,8 @@ void loopLeds()
       Adafruit_NeoPixel *strip  =  &(strips[s]);
       strip->show();
     }
+    endT();
+    
 }
 
 void tipPulse()
@@ -128,7 +148,7 @@ void tipPulse()
   int len = 10;
   float period = 5.0;
   float phase = 2.0 * 3.1415 * fmod( ((float) millis()) / 1000.0, period ) / period; // radians
-  float brightness = 0.5 + 0.5* sin(phase); // 0 to 1.0
+  float brightness = 0.5 + 0.5* fastsin(phase); // 0 to 1.0
   
     for( int s = 0;s < STRIPS; s ++)
     {
@@ -173,9 +193,9 @@ void sineScroll()
   
         phase = fmod( phase + timeOffset, 1.0  ); // move it along
         
-        float ig = 0.5 * (sin( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
+        float ig = 0.5 * (fastsin( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
         //float ib = 1.0 - ig; //(cos( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
-        float ib = (cos( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
+        float ib = (fastcos( 2.0 * 3.14 * phase ) + 1.0) / 2.0;
         //ig = 0.9 * ig + 0.1;
         //ib = 0.9 * ib + 0.1; 
 

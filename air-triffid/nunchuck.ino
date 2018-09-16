@@ -21,7 +21,7 @@ void setupNunchuck() {
     
   }
 
-  lastNunchuckTime = millis();
+  lastNunchuckTime = millis() - 20000;
   noMux();
   
 }
@@ -36,12 +36,15 @@ void loopNunchuck() {
   if( ! gotNunchuck )
   {
     if( traceNunchuck) Serial.println("no nunchuck");
+    startT(TNUNCHUCK);
+    endT();
     return;
   } 
 
 
   muxSelect(NUNCHUCK_ADDRESS);
-    
+
+  startT(TNUNCHUCK);
   boolean success = nchuk.update();  // Get new data from the controller
 
   if (success == true) {  // We've got data!
@@ -59,6 +62,7 @@ void loopNunchuck() {
     joyX = 0.0;
     joyY = 0.0;
   }
-
+  endT();
+  
   noMux();
 }
