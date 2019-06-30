@@ -58,6 +58,8 @@ char *behaviourLabel()
   return report;  
 }
 
+float lastAttentionAngle = -1;
+
 boolean loopBehaviour()
  {
   if( ! enableBehaviour )
@@ -67,14 +69,20 @@ boolean loopBehaviour()
   {
     // just look at nearest PIR
     setBendAngle( attentionAngle, attentionAmount );
-    Serial.print("attentionAngle ");
-    Serial.print(attentionAngle);
-    Serial.print(" attentionAmount ");
-    Serial.print(attentionAmount);
-    Serial.print(" ");
+
+    if( attentionAngle != lastAttentionAngle )
+    {
+      Serial.print("attentionAngle ");
+      Serial.print(attentionAngle);
+      Serial.print(" attentionAmount ");
+      Serial.print(attentionAmount);
+      Serial.println(" ");
+      lastAttentionAngle = attentionAngle;
+
+      printBellowsPressures("Behaviour");
+ 
+    }
     
-    
-    printBellowsPressures("Behaviour");
     return true;
   }
 

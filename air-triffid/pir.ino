@@ -6,6 +6,8 @@ Adafruit_MCP23017 mcp;
 #define PIRS 3
 boolean pir[PIRS];
 float pirActivity[] = {0.0, 0.0, 0.0}; // 0.0 to 1.0
+float pirFatigue[] = {0.0, 0.0, 0.0}; // 0.0 to 1.0
+float pirResult[] = {0.0, 0.0, 0.0}; // 0.0 to 1.0 
 float pirAngle[] = { 60, 180, 300 }; // degrees clockwise from bellows 0
 
 
@@ -42,15 +44,33 @@ void loopPir()
     Serial.print(":");
     Serial.print(pir[p]);
     Serial.print(" ");
+   Serial.print("a ");
+    Serial.print(pirActivity[p]);
+    Serial.print("   ");
     }
     
     if( pir[p] )
-      pirActivity[p]=1.0; // instant response
+    {
+      pirActivity[p]= 0.1 + pirActivity[p]; // slow response
+      if( pirActivity[p] > 1.0)
+        pirActivity[p] = 1.0;
+        
+      pirFatigue[p]= 0.03 + pirFatigue[p];; // slow response
+      if( pirFatigue[p] > 1.0)
+        pirFatigue[p] = 1.0;
+        
+    }
     else
+    {
       pirActivity[p] = 0.9*pirActivity[p]; // slow decay
 
+      pirFatigue[p] = 0.8*pirFatigue[p]; // recover from fatigue quickly
+    }
    
-   
+    pirResult[p]=pirActivity[p]-pirFatigue[p];
+    if( pirResult[p] < 0.0)
+        pirResult[p] = 0.0;
+    
   }
 
   if( tracePirs )
@@ -62,15 +82,15 @@ void loopPir()
   
   for( int p = 0; p < PIRS; p++)
   {
-    totalActivity += pirActivity[p];
-    if( pirActivity[p] > maxActivity )
+    totalActivity += pirResult[p];
+    if( pirResult[p] > maxActivity )
     {
-      maxActivity = pirActivity[p];
+      maxActivity = pirResult[p];
       maxP = p;
     }
   }  
 
-
+/*
   // go instantly to most energetic PIR
   if( maxP < 0 )
   {
@@ -82,15 +102,15 @@ void loopPir()
     attentionAmount = pirActivity[maxP];
     attentionAngle = pirAngle[maxP];
   }
-
+*/
   
-  /*
+  
   // weight PIRs together
   for( int p = 0; p < PIRS; p++)
-    moveAttention( pirAngle[p], pirActivity[p], totalActivity );
+    moveAttention( pirAngle[p], pirResult[p], totalActivity );
 
   attentionAmount = attentionAmount * 0.9 + maxActivity * 0.1; 
-  */
+  
   
 }
 

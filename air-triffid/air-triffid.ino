@@ -476,8 +476,8 @@ void setBendDirection(float x, float y)
     Bellows *bellow = &(bellows[b]);
     bendTargetX = x;
     bendTargetY = y;
-    float reduction = 0.4* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
-    bellow->reduction = fconstrain( reduction, 0.0, 0.5 );
+    float reduction = 0.8* (bendTargetX * bellow->x + bendTargetY * bellow->y); // not at all sure this is sensible
+    bellow->reduction = fconstrain( reduction, 0.0, 0.6 );
     bellow->targetPressure = baselinePressure * (1.0 - reduction);
   }
 
@@ -491,7 +491,7 @@ void setBendAngle( float angle, float amount )
 void loopWave()
 {
   float angle = fmod( (((float) millis()) /  10000.0), 1.0 ) * 360.0 ;
-  setBendAngle( angle, 0.2 );
+  setBendAngle( angle, 0.8 );
   printBellowsPressures("Wave: ");
    /*
   //float controlVal = analogRead(controlPotPin);   
