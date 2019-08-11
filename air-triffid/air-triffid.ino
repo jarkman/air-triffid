@@ -1,4 +1,7 @@
 
+// add this to Preferences/Addiotnal Board Manager URLs
+// http://arduino.esp8266.com/stable/package_esp8266com_index.json
+// and select LOLIN (WEMOS) D1 mini Pro
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -106,7 +109,7 @@ boolean enableDisplay = false; // costs about 200ms / loop
 
 boolean enableLeds = false; // costs about 150ms / loop, of which 100 is sin/cos fns
 
-
+boolean enablePoseTrack = true;
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
 boolean calibrateCompasses = false; // turn on then rotate each compass smoothly about all axes to get the individual compass min/max values for compass setup
@@ -597,8 +600,9 @@ void loop() {
   if( ! loopManual())
     if( ! loopSupermanualControl())
       if( ! loopSelftest())  
-        if( ! loopBehaviour())
-          loopWave();
+        if( ! loopPoseTrack())
+          if( ! loopBehaviour())
+            loopWave();
 
 
   for( int b = 0; b < BELLOWS; b ++ )
