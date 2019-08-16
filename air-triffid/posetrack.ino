@@ -58,6 +58,9 @@ boolean loopPoseTrack()
       return true;
    }
   else
+  {
+    numPeople = 0; // turn off LED behaviour
     return false;
+  }
 }
 
