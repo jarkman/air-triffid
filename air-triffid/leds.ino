@@ -207,9 +207,13 @@ void sineScroll()
       
     }
     
-    timeOffset = fmod( timeOffset + loopSeconds * scrollSpeed , 1.0 );
+    timeOffset = fmod( timeOffset + loopSeconds * getScrollSpeed(), 1.0 );
 }
 
+float getScrollSpeed()
+{
+  return scrollSpeed * (1.0 + (float) tiltPeople);
+}
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.

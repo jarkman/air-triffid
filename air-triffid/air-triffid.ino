@@ -146,6 +146,9 @@ float attentionAngle = 0.0; // net attention direction, degrees clockwise from b
 float attentionAmount = 0.0; // 0.0 to 1.1
 
 
+float tiltPeople = 0.0;
+int numPeople = 0;
+
 // UI screens accessible via encoder
 #define UI_STATES 3
 // 0 - pirs
