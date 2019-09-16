@@ -3,14 +3,14 @@ long tiltPeopleTime = millis();
 long numPeopleTime = millis();
 long peopleTimeout = 5000;
 
+float fastFactor = 0.1;
+float slowFactor = 0.01;
+
 // if we have pose-tracking inout, use that to control pose
 boolean loopPoseTrack()
 {
 
   if( ! enablePoseTrack )
-    return false;
-
-  if( ! Serial.available())
     return false;
 
   long now = millis();
@@ -38,21 +38,28 @@ boolean loopPoseTrack()
 
   }
 
+
+  slowNumPeople = (slowFactor*loopSeconds) * numPeople + (1.0-slowFactor*loopSeconds) * slowNumPeople;
+  fastNumPeople = (fastFactor*loopSeconds) * numPeople + (1.0-fastFactor*loopSeconds) * fastNumPeople;
+  
   if( now - tiltPeopleTime < peopleTimeout )
   {
       if( numPeople < 1 )
         numPeople = 1; // so we get speeded-up behaviour even if I don't get round to writing the num-sending code
         
-      float amount = fabs(tiltPeople);
-      float angle = (tiltPeople > 0.0) ? 180 : 0; // TODO = probably the wrong way round
+      float x = tiltPeople;
+      float y = fastNumPeople - slowNumPeople; // lean toward when people arrive, away when they leave
+      
+      //float amount = fabs(tiltPeople);
+      //float angle = (tiltPeople > 0.0) ? 180 : 0; // TODO = probably the wrong way round
     
-      setBendAngle( angle, amount );
+      setBendDirection( x, y );
       
       
-      Serial.print("tilt setting angle ");
-      Serial.print(angle);
-      Serial.print(" amount ");
-      Serial.print(amount);
+      Serial.print("tilt setting x ");
+      Serial.print(x);
+      Serial.print(" y ");
+      Serial.print(y);
       Serial.println(" ");
 
       return true;

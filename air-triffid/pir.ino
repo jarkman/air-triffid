@@ -13,6 +13,9 @@ float pirAngle[] = { 60, 180, 300 }; // degrees clockwise from bellows 0
 
 void setupPir()
 {
+  return ;
+
+  
   noMux();
   mcp.begin();      // use default address 0
   for( int p = 0; p < PIRS; p++)
@@ -26,6 +29,8 @@ void setupPir()
 boolean s = false;
 void loopPir()
 {
+
+return;
 
   s = ! s;
 

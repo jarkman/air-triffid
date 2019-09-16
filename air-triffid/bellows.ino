@@ -65,10 +65,10 @@ void startBmp280( char* label, Adafruit_BMP280 *b)
     }
   else
   {
-    /*Serial.print(label); Serial.print(" - ");
+    Serial.print(label); Serial.print(" - ");
     Serial.print("Found BMP280 sensor");
     float pressure = bmp280Atmospheric.readPressure();
-    Serial.print("  pressure "); Serial.println(pressure);*/
+    Serial.print("  pressure "); Serial.println(pressure);
   }
 
    /* b->setSampling(Adafruit_BMP280::MODE_NORMAL,

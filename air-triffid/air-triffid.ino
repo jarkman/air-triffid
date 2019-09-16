@@ -107,9 +107,9 @@ boolean traceSelftest = false;
 
 boolean enableDisplay = false; // costs about 200ms / loop
 
-boolean enableLeds = false; // costs about 150ms / loop, of which 100 is sin/cos fns
+boolean enableLeds = true; // costs about 150ms / loop, of which 100 is sin/cos fns
 
-boolean enablePoseTrack = true;
+boolean enablePoseTrack = false;
 boolean enableBellows = true;  // turn on/off bellows code
 boolean enableBehaviour = true;
 boolean calibrateCompasses = false; // turn on then rotate each compass smoothly about all axes to get the individual compass min/max values for compass setup
@@ -148,6 +148,8 @@ float attentionAmount = 0.0; // 0.0 to 1.1
 
 float tiltPeople = 0.0;
 int numPeople = 0;
+float slowNumPeople = 0.0;
+float fastNumPeople = 0.0;
 
 // UI screens accessible via encoder
 #define UI_STATES 3
@@ -537,9 +539,14 @@ void manageI2C()
 
   i2cResetCount ++;
 
-  Serial.print("i2c reset # ");  Serial.println(i2cResetCount);
+ 
+  if( i2cResetCount > 5 )
+  {
+    return;
+  }
 
-  
+   Serial.print("i2c reset # ");  Serial.println(i2cResetCount);
+
   noMux();
   int i2cResult = Wire.endTransmission(true);
   Serial.print("i2c master reset"); Serial.print(" - " ); Serial.println(i2cResult);

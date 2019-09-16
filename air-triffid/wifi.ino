@@ -5,7 +5,7 @@
 // Causes a compile error, documented here: https://github.com/esp8266/Arduino/issues/398
 
 
-#define DO_WIFI
+//#define DO_WIFI
 
 
 #ifndef DO_WIFI
@@ -38,21 +38,28 @@ void setupWifi() {
   delay(1000);
   Serial.begin(115200);
   Serial.println();
-  Serial.print("Configuring access point...");
-  /* You can remove the password parameter if you want the AP to be open. */
-  //WiFi.softAP(ssid, password);
-  WiFi.softAP(ssid);
 
-  IPAddress myIP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(myIP);
-  server.on("/", handleRoot);
-  server.begin();
-  Serial.println("HTTP server started");
+  if( doWiFi )
+  {
+    Serial.print("Configuring access point...");
+    /* You can remove the password parameter if you want the AP to be open. */
+    //WiFi.softAP(ssid, password);
+    WiFi.softAP(ssid);
+  
+    IPAddress myIP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(myIP);
+    server.on("/", handleRoot);
+    server.begin();
+    Serial.println("HTTP server started");
+  }
 }
 
 void loopWifi() {
+  if( doWiFi )
+  {
   server.handleClient();
+  }
 }
 
 #endif // DO_WIFI
